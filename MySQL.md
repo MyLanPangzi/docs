@@ -1,6 +1,4 @@
-
-
-
+[TOC]
 
 # 索引
 
@@ -207,14 +205,12 @@
 
             MySQL can use this join type when the query uses only columns that are part of a single index.
 
-         3.  MySQL can use this join type when the query uses only columns that are part of a single index 
-
       7. ALL
 
          1.  A full table scan is done for each combination of rows from the previous tables. This is normally not good if the table is the first table not marked [`const`](https://dev.mysql.com/doc/refman/5.5/en/explain-output.html#jointype_const), and usually*very* bad in all other cases. Normally, you can avoid [`ALL`](https://dev.mysql.com/doc/refman/5.5/en/explain-output.html#jointype_all) by adding indexes that enable row retrieval from the table based on constant values or column values from earlier tables. 
 
       8. ```mysql
-         explain select * from (select * from t1  where id = 1) t;#system const
+   explain select * from (select * from t1  where id = 1) t;#system const
          explain select * from t1 inner join t2 on t1.id = t2.id;##eq_ref
          alter table t1 add index idx_t1_content(content); #ref
          explain select * from t1 where t1.content = '';#ref
@@ -223,7 +219,7 @@
          explain select * from t1;#all
          
          ```
-
+      
          
 
    5. possible_keys
@@ -239,31 +235,31 @@
       5. 理论没用到，实际没用到
 
       6. ```mysql 
-         alter table t1 add index idx_t1_content(content); #
+      alter table t1 add index idx_t1_content(content); #
          explain select * from t1 where t1.content = '';#possible_keys = key
          explain select * from t1 where id in (1,2,3);##possible_keys != key
          explain select id from t2;##possible_keys = null, key = primary
          explain select * from t2;#all is null
          ```
-
+   
          
 
    6. key
 
       1. 实际使用到的索引，如果为NULL则未使用
-      2.  It is possible that `key` will name an index that is not present in the `possible_keys` value. This can happen if none of the `possible_keys` indexes are suitable for looking up rows, but all the columns selected by the query are columns of some other index. That is, the named index covers the selected columns, so although it is not used to determine which rows to retrieve, an index scan is more efficient than a data row scan. 
+   2.  It is possible that `key` will name an index that is not present in the `possible_keys` value. This can happen if none of the `possible_keys` indexes are suitable for looking up rows, but all the columns selected by the query are columns of some other index. That is, the named index covers the selected columns, so although it is not used to determine which rows to retrieve, an index scan is more efficient than a data row scan. 
       3.  For `InnoDB`, a secondary index might cover the selected columns even if the query also selects the primary key because `InnoDB` stores the primary key value with each secondary index. If `key` is `NULL`, MySQL found no index to use for executing the query more efficiently. 
       4. **InnoDB中，每一个辅助索引都保存了主键。如果主键与辅助索引一起出现，并不影响索引的覆盖。**
-
+   
    7. key_len
 
       1. 索引可能使用最大字节数，同结果下，越短越好
-      2. 计算规则
+   2. 计算规则
          1. int 4
          2. null 1
          3. 可变类型 2 varchar
          4. idx_age_name 5 + 13 = 18
-
+   
    8. ref
 
       1. 哪些列或常量与所以中的列进行比较
@@ -271,7 +267,7 @@
       2. The `ref` column shows which columns or constants are compared to the index named in the `key` column to select rows from the table.
 
       3. ```mysql
-      explain select * from t1,t2,t3 where t1.id = t2.id and t3.id=t2.id;
+   explain select * from t1,t2,t3 where t1.id = t2.id and t3.id=t2.id;
          
          1	SIMPLE	t1	index	PRIMARY	idx_t1_content	403		1	Using index
          1	SIMPLE	t2	eq_ref	PRIMARY	PRIMARY	4	hello.t1.id	1	""
@@ -403,3 +399,152 @@ alter table phone add index idx_phone_card(card);
 explain select * from class left join book on book.card = class.card left join phone on phone.card = book.card;#ref ref 
 ```
 
+
+
+## 索引失效
+
+1. 全值匹配我最爱
+
+   1. ```mysql
+      create table  staffs(
+          id int primary key auto_increment,
+          name varchar(24) not null ,
+          age int not null ,
+          pos varchar(20) not null ,
+          add_time timestamp not null  default CURRENT_TIMESTAMP
+      );
+      insert into staffs (name,age, pos)
+      values
+             ('z3',22,'manager'),
+             ('July',23,'dev'),
+             ('2000',23,'dev');
+      alter table staffs add index idx_staffs_name_age_pos(name,age,pos);
+      explain select * from staffs where name = '';#ref
+      explain select * from staffs where name = '' and age = 10;#ref
+      explain select * from staffs where name = '' and age = 10 and pos = '';#ref
+      ```
+
+2. 最佳左前缀法则
+
+   1. ```mysql
+      explain select * from staffs where age = 10 and pos = '';#ALL
+      explain select * from staffs where name = '' and pos = '';#ref name index
+      ```
+
+3. 索引列上无计算
+
+   1. ```mysql
+      explain select * from staffs where name = 'July';#ref
+      explain select * from staffs where LEFT(name, 4) = 'July';#ALL
+      ```
+
+4. 范围之后全失效
+
+   1. ```mysql
+      explain select * from staffs where name = '' and age > 10 and pos = '';#range name age index
+      explain select * from staffs where name = '' and age >= 11 and pos = '';#range name age pos index
+      ```
+
+5. 尽量使用覆盖索引
+
+   1. ```mysql
+      explain select * from staffs where name = '' and age = 10 and pos = '';#Using where
+      explain select name,age,pos from staffs where name = '' and age = 10 and pos = '';#Using where Using index
+      explain select name,age,pos from staffs where name = '' and age > 10 and pos = '';#Using where Using index only use name index
+      explain select name,age,pos from staffs where name = '' and pos = '';#Using where Using index only use name
+      explain select name,age,pos from staffs where name = '' and age = 10;#Using where Using index use name age 
+      ```
+
+6. 使用不等于的时候会无法使用索引导致全表扫描
+
+   1. ```mysql
+      explain select * from staffs where name = '';#ref
+      explain select * from staffs where name != '';#ALL 8.0是range
+      ```
+
+7. is null，is not null也无法使用索引
+
+   1. ```mysql
+      alter table staffs add column address varchar(20);
+      explain select * from staffs where staffs.address is null;#ALL
+      explain select * from staffs where staffs.address is not null;#ALL
+      ```
+
+   2. 字段允许为NULL时，is null会用到索引（8.0）
+
+      1. ```mysql
+         alter table staffs add index idx_staffs_address(address);
+         explain select * from staffs where staffs.address is null;#ref
+         ```
+
+8. like 通配符开头会导致索引失效，变成全表扫描，可以使用覆盖索引
+
+   1. ```mysql
+      create table t_user(    id    int primary key auto_increment,    name  varchar(20),    age   int,    email varchar(20));
+      insert into t_user (name, age, email)values('a',10,'123123@asdas.com'),('b',11,'1223@asdas.com'),('c',12,'12@asdas.com');
+      alter table t_user add index idx_t_user_name_age(name,age);
+      explain select * from t_user where name like '%b%';#ALL
+      explain select * from t_user where name like '%b';#ALL
+      explain select * from t_user where name like 'b%';#range
+      explain select * from t_user where name like 'b%b%';#range
+      explain select id from t_user where name like '%b%';#index Using index
+      explain select name from t_user where name like '%b%';#index Using index
+      explain select age from t_user where name like '%b%';#index Using index
+      explain select name,age from t_user where name like '%b%';#index Using index
+      explain select id,name,age from t_user where name like '%b%';#index Using index
+      explain select id,name,age,email from t_user where name like '%b%';#ALL
+      explain select * from t_user where name like '%b%';#ALL
+      ```
+
+9. 字符串不加单引号索引失效
+
+10. ```mysql
+    explain select * from t_user where name = '1';#ref
+    explain select * from t_user where name = 1;#ALL
+    ```
+
+11. 少用or，用它连接时索引会失效
+
+    1. ```mysql
+       explain select * from t_user where name = '' or name = '1';#ALL
+       ```
+
+12. ![image-20191130181454750](C:\Users\Administrator\Documents\Typro\images\image-20191130181454750.png)
+
+## 面试题
+
+```mysql
+
+create table test(
+    c1 char(10) not null ,
+    c2 char(10) not null ,
+    c3 char(10) not null ,
+    c4 char(10) not null ,
+    c5 char(10) not null
+);
+alter table test add index idx_c1234(c1,c2,c3,c4);
+alter table test drop index idx_c1234;
+explain select * from test where c1 = '';#ref c1
+explain select * from test where c1 = '' and c2 = '';#ref c1 c2
+explain select * from test where c1 = '' and c2 = '' and c3 = '';#ref c1 c2 c3
+explain select * from test where c1 = '' and c2 = '' and c3 = '' and c4 = '';#ref c1 c2 c3 c4
+explain select * from test where c2 = '' and c3 = '' and c4 = '' and c1 = '';#ref c1 c2 c3 c4
+explain select * from test where c2 = '' and c3 = '' and c1 = '';#ref c1 c2 c3
+explain select * from test where c1 = '' and c2 = '' and c3 > '' and c4 = '';#range c1 c2 c3
+explain select * from test where c1 = '' and c2 = '' and c3 = '' and c4 > '';#range c1 c2 c3 c4
+explain select * from test where c1 = '' and c2 = '' and c4 = '' order by c3;#ref c1 c2  #c3 not count into possible_keys use sort
+explain select * from test where c1 = '' and c2 = '' order by c3;#ref c1 c2  #c3 not count into possible_keys use sort
+explain select * from test where c1 = '' and c2 = '' order by c4;#ref c1 c2 using filesort
+explain select * from test where c1 = '' and c5 = '' order by c2,c3;#ref c1 //c2 c3 not count into possible_keys use sort
+explain select * from test where c1 = '' and c5 = '' order by c3,c2;#ref c1 using filesort
+explain select * from test where c1 = '' and c2 = '' and c5 = '' order by c2,c3;#ref c1 c2 //c3 not count into possible_keys but use sort
+explain select * from test where c1 = '' and c2 = '' and c5 = '' order by c3,c2;#ref c1 c2 //c2 is const,don`t affect sort
+explain select * from test where c1 = '' and c4 = '' group by c2,c3;#ref c1 //c2 c3 use sort,强调：查询条件用到索引，中间列不能断开，必须也是过滤条件，不能是排序列
+explain select * from test where c1 = '' and c4 = '' group by c3,c2;#ref c1 using temporary using filesort
+```
+
+1. 定值、范围还是排序，order by 是给个范围
+2. group by基本上都需要排序，先排序再分组，会有临时表产生
+3. ![image-20191130202833545](C:\Users\Administrator\Documents\Typro\images\index-recommend)
+
+# 查询截取分析
