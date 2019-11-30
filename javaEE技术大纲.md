@@ -30,7 +30,7 @@
 
 ## 文件存储
 
-* FastDFS
+* OSS
 
 ## 微服务实现（Spring Cloud)
 
