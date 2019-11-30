@@ -548,3 +548,21 @@ explain select * from test where c1 = '' and c4 = '' group by c3,c2;#ref c1 usin
 3. ![image-20191130202833545](C:\Users\Administrator\Documents\Typro\images\index-recommend)
 
 # 查询截取分析
+
+## 查询优化
+
+1. 小表驱动大表
+2. in exists
+   1. A表，B表，A表记录大于B表记录使用in
+   2. 否则使用exists SELECT * FROM A WHERE EXISTS (SELECT 1 FROM B WHERE A.id = B.id)
+3. order by
+   1. 避免使用filesort
+   2. 符合索引最左前缀
+   3. Where 使用索引的最左前缀定义为常量，order by使用索引
+   4. 尽量在索引上完成排序操作
+   5. 如果用到了filesort，调优sort_buffer，max_length_for_sort_data
+   6. ![image-20191130230255047](C:\Users\Administrator\Documents\Typro\images\order by)
+4. group by
+   1. 先排序后分组，符合索引最佳左前缀
+   2. 同order by用到filesort时调优sort_buffer，max_length_for_sort_data
+   3. where高于having，尽量在where完成限定
