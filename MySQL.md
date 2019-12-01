@@ -552,9 +552,11 @@ explain select * from test where c1 = '' and c4 = '' group by c3,c2;#ref c1 usin
 ## 查询优化
 
 1. 小表驱动大表
+
 2. in exists
    1. A表，B表，A表记录大于B表记录使用in
    2. 否则使用exists SELECT * FROM A WHERE EXISTS (SELECT 1 FROM B WHERE A.id = B.id)
+   
 3. order by
    1. 避免使用filesort
    2. 符合索引最左前缀
@@ -562,7 +564,188 @@ explain select * from test where c1 = '' and c4 = '' group by c3,c2;#ref c1 usin
    4. 尽量在索引上完成排序操作
    5. 如果用到了filesort，调优sort_buffer，max_length_for_sort_data
    6. ![image-20191130230255047](C:\Users\Administrator\Documents\Typro\images\order by)
+   
 4. group by
    1. 先排序后分组，符合索引最佳左前缀
+   
    2. 同order by用到filesort时调优sort_buffer，max_length_for_sort_data
+   
    3. where高于having，尽量在where完成限定
+   
+## 慢查询日志
+
+   1. ```mysql
+      show variables like '%slow_query_log%';
+      set global slow_query_log =1;
+      show variables like 'long_query_time';
+      set global long_query_time = 1;
+      show global status like '%Slow%';
+      select sleep(2);
+      ```
+   
+   2. 如果需要永久生效修改,my.cnf文件[mysqld]
+   
+   3. mysqldumpslow
+   
+      1. ```shell
+         root@51644daabc6e:/var/lib/mysql# mysqldumpslow --help
+         Usage: mysqldumpslow [ OPTS... ] [ LOGS... ]
+         
+         Parse and summarize the MySQL slow query log. Options are
+         
+           --verbose    verbose
+           --debug      debug
+           --help       write this text to standard output
+         
+           -v           verbose
+           -d           debug
+           -s ORDER     what to sort by (al, at, ar, c, l, r, t), 'at' is default
+                         al: average lock time 
+                         ar: average rows sent
+                         at: average query time
+                          c: count
+                          l: lock time
+                          r: rows sent
+                          t: query time  
+           -r           reverse the sort order (largest last instead of first)
+           -t NUM       just show the top n queries
+           -a           don't abstract all numbers to N and strings to 'S'
+           -n NUM       abstract numbers with at least n digits within names
+           -g PATTERN   grep: only consider stmts that include this string
+           -h HOSTNAME  hostname of db server for *-slow.log filename (can be wildcard),
+                        default is '*', i.e. match all
+           -i NAME      name of server instance (if using mysql.server startup script)
+           -l           don't subtract lock time from total time	
+         ```
+      
+      2. mysqldumpslow -s al -t 10 -g "left join" //根据平均锁时间，查询前十条带有左连接的记录
+
+   ## Profile
+
+1.    
+
+   ```mysql
+   show variables like 'profiling';
+   set global profiling = 1;
+   help 'show profile';
+   select * from emp;
+   select * from t_emp;
+   select * from t_dept;
+   select * from t_dept t inner join t_emp e on t.id = e.deptId;
+   select * from emp group by id % 10 order by name limit 500000;
+   select * from emp,dept limit 2000000;
+   show profile ALL for query 11;
+   show profile CPU,BLOCK IO for query 11;
+   ```
+
+   ![image-20191201091832962](C:\Users\Administrator\Documents\Typro\images\show-profile)
+
+# 锁机制
+
+## 分类
+
+1. 表锁
+
+   1. MyISAM只支持表锁，不支持事务。
+
+2. 行锁
+
+   1. Innodb支持行锁，支持事务。
+
+3. 读锁
+
+   1. **针对同一份数据，可多个读操作，互不影响，阻塞写操作。**
+
+   2. **读锁/写锁只能读取当前会话锁定的表，不能读取其他表**
+
+   3. 案例
+
+      ```mysql
+      help 'lock';
+      show open tables where In_use = 1;
+      lock tables class read, book write;
+      select * from class;
+      select * from book;
+      insert into book (bookid, card) values (123123,1231231);
+      # insert into class (id, card)values (1111,123123123);#[HY000][1099] Table 'class' was locked with a READ lock and can't be updated
+      # select * from emp;#[HY000][1100] Table 'emp' was not locked with LOCK TABLES
+      unlock tables ;
+      #另开一个会话，读book表，会阻塞
+      ```
+
+   4. ![image-20191201095431135](C:\Users\Administrator\Documents\Typro\images\myisam-lock)
+
+4. 写锁
+
+   1. **排它锁，只有锁的拥有者可读可写，阻塞其他会话的操作。**
+
+   2. 案例
+
+      ```mysql
+      lock tables book write ;
+      select * from book;
+      insert into book (bookid, card)values (9999,123123123);
+      unlock tables ;
+      ##另开一个会话
+      select * from book;
+      insert into book (bookid, card)values (666,666);
+      ```
+
+   3. ![image-20191201095630470](C:\Users\Administrator\Documents\Typro\images\innodb-lock)
+
+## 事务
+
+1. ACID，事务是一组逻辑单元，要么全部执行成功，要么全部失败。
+2. Atomicity 原子性
+3. Consistent一致性
+4. Isolation隔离性
+5. Durable 持久性
+
+
+
+## 并发带来的问题
+
+1. 丢失更新
+   1. 不支持事务的数据库会发生这种情况，也就是不支持锁的情况
+2. 脏读
+   1. 隔离级别为READ UNCOMMITED读取未提交的数据会发生脏读
+3. 不可重复读
+   1. 隔离级别为READ COMMITED读取已提交的数据会发生不可重复读
+4. 幻读
+   1. 只有SERIALIZABLE串行化隔离级别才能阻止幻读
+
+## 事务隔离级别
+
+1. REPEATABLE READ 可重复读 **innodb默认级别**，会发生幻读
+2. READ COMMITED 读取已提交，会发生不可重复读，幻读
+3. READ UNCOMMITED 读取未提交，会发生脏读，不可重复读，幻读
+4. SERALIZABLE 串行化 不会发生任何并发问题，但会降低效率。
+5. 案例演示
+   1. ![image-20191201105943925](C:\Users\Administrator\Documents\Typro\images\isolcation-1)
+
+![image-20191201110045142](C:\Users\Administrator\Documents\Typro\images\isolcation-2.png)
+
+![image-20191201110219289](C:\Users\Administrator\Documents\Typro\images\isolcation-3.png)
+
+![image-20191201110247257](C:\Users\Administrator\Documents\Typro\images\isolcation-4.png)
+
+## 行锁变表锁
+
+**更新数据的时候不要使用隐式的转换条件，不然会导致行锁变表锁**。
+
+## 间隙锁
+
+使用范围条件更新时，会产生间隙锁。
+
+## 锁定一行
+
+```mysql
+begin;
+select * from mylock where id = 1 for udpate;
+commit;
+```
+
+## 优化建议
+
+![image-20191201114005030](C:\Users\Administrator\Documents\Typro\images\lock-suggest.png)
+
