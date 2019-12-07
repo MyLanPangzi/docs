@@ -6,19 +6,8 @@
 
 **多文件搜索**
 
-1. --color=auto
-   1. alias grep="grep --color=auto"
-   2. /etc/bashrc    append previous line
-2. -n 行号
-3. -i 忽略大小写
-4. ^开头 $结尾
-5. -v 反选
-6. -B before 前几行
-7. -A after 后几行
-8. -C context 上下文几行
-9. -w word统计单词
-10. -o 只打印关键字，可配合 wc 使用
-11. ![image-20191207151427657](C:\Users\Administrator\Documents\docs\images\grep.png)
+1. ![image-20191207151427657](C:\Users\Administrator\Documents\docs\images\grep.png)
+2. ![image-20191207151837327](C:\Users\Administrator\Documents\docs\images\grep-案例.png)
 
 ## Cut
 
@@ -32,6 +21,9 @@
    2. N- 从几开始到结束
    3. N-M N到M 闭区间
    4. -M 从1开始到M，闭区间
+5. ![image-20191207151923797](C:\Users\Administrator\Documents\docs\images\cut.png)
+6. ![image-20191207152138085](C:\Users\Administrator\Documents\docs\images\cut-案例.png)
+7. 课堂练习![image-20191207152233458](C:\Users\Administrator\Documents\docs\images\课堂练习1.png)
 
 ## Sort
 
@@ -45,6 +37,9 @@
 6. -k第几列
 7. -b 忽略前导空格
 8. -d 只考虑空白与字母
+9. 
+10. ![image-20191207152332655](C:\Users\Administrator\Documents\docs\images\sort.png)
+11. ![image-20191207152403207](C:\Users\Administrator\Documents\docs\images\sort-案例.png)
 
 ## Uniq
 
@@ -57,21 +52,38 @@
 5. -D duplicate 显示所有重复的行
 6. -f 避免比较前n个制表符
 7. -s 跳过前n个字符比较
+8. ![image-20191207152453365](C:\Users\Administrator\Documents\docs\images\uniq.png)
 
 ## Tee
 
 **多文件追加，从输入流打印到文件以及输出流**
 
 1. -a 追加
+2. ![image-20191207152521038](C:\Users\Administrator\Documents\docs\images\tee.png)
 
 ## Diff
 
+1. ![image-20191207152554110](C:\Users\Administrator\Documents\docs\images\diff1.png)
+2. ![image-20191207152643831](C:\Users\Administrator\Documents\docs\images\diff2.png)
+3. ![image-20191207152722134](C:\Users\Administrator\Documents\docs\images\diff-normal.png)
+4. ![image-20191207152828419](C:\Users\Administrator\Documents\docs\images\diff-context.png)
+5. ![image-20191207152922352](C:\Users\Administrator\Documents\docs\images\diff-merge.png)
+6. ![image-20191207153028361](C:\Users\Administrator\Documents\docs\images\diff-dir.png)
+7. ![image-20191207153136443](C:\Users\Administrator\Documents\docs\images\diff-patch.png)
+
 ## Paste
+
+1. ![image-20191207153212483](C:\Users\Administrator\Documents\docs\images\paste.png)
 
 ## Tr
 
 1. 搜索替换
 2. 删除
+3. ![image-20191207153315132](C:\Users\Administrator\Documents\docs\images\tr-1.png)
+4. ![image-20191207153349339](C:\Users\Administrator\Documents\docs\images\tr-2.png)
+5. ![image-20191207153431547](C:\Users\Administrator\Documents\docs\images\tr-3.png)
+6. ![image-20191207153754499](C:\Users\Administrator\Documents\docs\images\课堂练习2.png)
+7. ![image-20191207153830961](C:\Users\Administrator\Documents\docs\images\课堂练习3.png)
 
 # Bash
 
