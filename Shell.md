@@ -18,6 +18,7 @@
 8. -C context 上下文几行
 9. -w word统计单词
 10. -o 只打印关键字，可配合 wc 使用
+11. ![image-20191207151427657](C:\Users\Administrator\Documents\docs\images\grep.png)
 
 ## Cut
 
@@ -57,9 +58,33 @@
 6. -f 避免比较前n个制表符
 7. -s 跳过前n个字符比较
 
-## tee
+## Tee
 
 **多文件追加，从输入流打印到文件以及输出流**
 
 1. -a 追加
 
+## Diff
+
+## Paste
+
+## Tr
+
+1. 搜索替换
+2. 删除
+
+# Bash
+
+## 常见快捷键
+
+![image-20191207143711329](C:\Users\Administrator\Documents\docs\images\shorthands.png)
+
+## 通配符
+
+![image-20191207143859088](C:\Users\Administrator\Documents\docs\images\通配符.png)
+
+## 引号
+
+![image-20191207144848958](C:\Users\Administrator\Documents\docs\images\引号.png)
+
+![image-20191207145304472](C:\Users\Administrator\Documents\docs\images\引号案例.png)
