@@ -509,7 +509,7 @@ explain select * from class left join book on book.card = class.card left join p
        explain select * from t_user where name = '' or name = '1';#ALL
        ```
 
-12. ![image-20191130181454750](C:\Users\Administrator\Documents\Typro\images\image-20191130181454750.png)
+12. ![image-20191130181454750](.\images\image-20191130181454750.png)
 
 ## 面试题
 
@@ -545,7 +545,7 @@ explain select * from test where c1 = '' and c4 = '' group by c3,c2;#ref c1 usin
 
 1. 定值、范围还是排序，order by 是给个范围
 2. group by基本上都需要排序，先排序再分组，会有临时表产生
-3. ![image-20191130202833545](C:\Users\Administrator\Documents\Typro\images\index-recommend)
+3. ![image-20191130202833545](.\images\index-recommend)
 
 # 查询截取分析
 
@@ -563,7 +563,7 @@ explain select * from test where c1 = '' and c4 = '' group by c3,c2;#ref c1 usin
    3. Where 使用索引的最左前缀定义为常量，order by使用索引
    4. 尽量在索引上完成排序操作
    5. 如果用到了filesort，调优sort_buffer，max_length_for_sort_data
-   6. ![image-20191130230255047](C:\Users\Administrator\Documents\Typro\images\order by)
+   6. ![image-20191130230255047](.\images\order by)
    
 4. group by
    1. 先排序后分组，符合索引最佳左前缀
@@ -638,7 +638,7 @@ explain select * from test where c1 = '' and c4 = '' group by c3,c2;#ref c1 usin
    show profile CPU,BLOCK IO for query 11;
    ```
 
-   ![image-20191201091832962](C:\Users\Administrator\Documents\Typro\images\show-profile)
+   ![image-20191201091832962](.\images\show-profile)
 
 # 锁机制
 
@@ -673,7 +673,7 @@ explain select * from test where c1 = '' and c4 = '' group by c3,c2;#ref c1 usin
       #另开一个会话，读book表，会阻塞
       ```
 
-   4. ![image-20191201095431135](C:\Users\Administrator\Documents\Typro\images\myisam-lock)
+   4. ![image-20191201095431135](.\images\myisam-lock)
 
 4. 写锁
 
@@ -691,7 +691,7 @@ explain select * from test where c1 = '' and c4 = '' group by c3,c2;#ref c1 usin
       insert into book (bookid, card)values (666,666);
       ```
 
-   3. ![image-20191201095630470](C:\Users\Administrator\Documents\Typro\images\innodb-lock)
+   3. ![image-20191201095630470](.\images\innodb-lock)
 
 ## 事务
 
@@ -721,13 +721,13 @@ explain select * from test where c1 = '' and c4 = '' group by c3,c2;#ref c1 usin
 3. READ UNCOMMITED 读取未提交，会发生脏读，不可重复读，幻读
 4. SERALIZABLE 串行化 不会发生任何并发问题，但会降低效率。
 5. 案例演示
-   1. ![image-20191201105943925](C:\Users\Administrator\Documents\Typro\images\isolcation-1)
+   1. ![image-20191201105943925](.\images\isolcation-1)
 
-![image-20191201110045142](C:\Users\Administrator\Documents\Typro\images\isolcation-2.png)
+![image-20191201110045142](.\images\isolcation-2.png)
 
-![image-20191201110219289](C:\Users\Administrator\Documents\Typro\images\isolcation-3.png)
+![image-20191201110219289](.\images\isolcation-3.png)
 
-![image-20191201110247257](C:\Users\Administrator\Documents\Typro\images\isolcation-4.png)
+![image-20191201110247257](.\images\isolcation-4.png)
 
 ## 行锁变表锁
 
@@ -747,5 +747,5 @@ commit;
 
 ## 优化建议
 
-![image-20191201114005030](C:\Users\Administrator\Documents\Typro\images\lock-suggest.png)
+![image-20191201114005030](.\images\lock-suggest.png)
 

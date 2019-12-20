@@ -14,7 +14,7 @@
    ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
    ```
 
-3. 把~/.ssh/id_rsa.pub拷贝到![image-20191207155652034](C:\Users\Administrator\Documents\docs\github-ssh.png)
+3. 把~/.ssh/id_rsa.pub拷贝到![image-20191207155652034](./github-ssh.png)
 
 4. 测试 
 
