@@ -1,4 +1,4 @@
-# 1 安装
+# 1 ES安装
 
 ## **（ES7.5需要JDK版本8以上，且配置JAVA_HOME环境变量）**
 
@@ -50,4 +50,7 @@ docker run --network=es-network -p 9200:9200 -p 9300:9300 -e "discovery.type=sin
 
 ![](images\es-docker-validate.png)
 
-# 2 配置
+# 2 Elastic Stack On Docker
+
+## [安装链接](https://www.elastic.co/guide/en/elastic-stack-get-started/current/get-started-docker.html)（注意修改镜像）
+
