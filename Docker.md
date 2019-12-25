@@ -19,9 +19,9 @@
 
 保留服务中所有的卷，每次运行新容器会拷贝旧容器的数据卷
 
-### 当容器改变时才会重新创建
+#### 当容器改变时才会重新创建
 
-### 可使用变量定制化环境
+#### 可使用变量定制化环境
 
 ## Docker Compose Get Started
 
@@ -152,4 +152,40 @@ docker-compose run web env
 docker-compose stop
 docker-compose down --volumes
 ```
+
+## Configure networking
+
+### Networking overview
+
+#### Bridge
+
+最常使用，单主机多容器通讯。
+
+#### Host
+
+多容器共享主机网络时使用，网络不隔离，但隔离其他方面。
+
+#### Overlay
+
+跨主机通讯，swarm，K8S部署多服务时。
+
+#### Macvlan
+
+使用物理网络通讯，每个容器会绑定一个Mac地址。
+
+#### None
+
+什么网络都没有。
+
+### Use bridge networks
+
+1. 用户自定义网络在容器化应用间提供了更好的隔离以及互操作性。
+2. 自定义桥接网络提供了自动DNS解决方案，容器间可以通过容器名进行通讯。
+3. 容器可以随时从桥接网络中脱离或加入。
+4. 每个自定义桥接网络创建了一个可配置的桥接网络。
+5. Docker自带的默认桥接网络可以在容器间共享环境变量。
+   1. 多容器间可通过Volume进行数据共享。
+   2. 多容器间可以通过docker-compose共享变量。
+   3. 可使用K8S，swarm共享密钥以及配置。
+6. 自定义桥接网络命令![image-20191225211808941](images\docker-network.png)
 
