@@ -358,3 +358,4 @@ minikube-ingress：https://kubernetes.io/docs/tasks/access-application-cluster/i
 ingress-install：https://kubernetes.github.io/ingress-nginx/deploy/
 
 李卫民-博客：[https://www.funtl.com/zh/service-mesh-kubernetes/Ingress-%E7%BB%9F%E4%B8%80%E8%AE%BF%E9%97%AE%E5%85%A5%E5%8F%A3.html#%E6%9C%AC%E8%8A%82%E8%A7%86%E9%A2%91](https://www.funtl.com/zh/service-mesh-kubernetes/Ingress-统一访问入口.html#本节视频)
+
