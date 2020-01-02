@@ -189,3 +189,97 @@ docker-compose down --volumes
    3. 可使用K8S，swarm共享密钥以及配置。
 6. 自定义桥接网络命令![image-20191225211808941](images\docker-network.png)
 
+## Swarm
+
+### Create a swarm
+
+```shell
+docker swarm init --advertise-addr <MANAGER-IP>
+docker node ls
+```
+
+### Add nodes to the swarm
+
+```shell
+docker swarm join-token worker
+docker swarm join \
+  --token  SWMTKN-1-49nj1cmql0jkz5s954yi3oex3nedyz0fb0xx14ie39trti4wxv-8vxv8rssmk743ojnwacrr2e7c \
+  192.168.99.100:2377
+  
+```
+
+### Deploy a service to the swarm
+
+```shell
+ docker service create --replicas 1 --name helloworld alpine ping docker.com
+ docker service ls
+```
+
+### Inspect a service on the swarm
+
+```shell
+docker service inspect --pretty helloworld
+docker service ps helloworld
+docker ps
+```
+
+### Scale the service in the swarm
+
+```shell
+docker service scale <SERVICE-ID>=<NUMBER-OF-TASKS>
+docker service ps helloworld
+docker ps
+```
+
+### Delete the service running on the swarm
+
+```shell
+docker service rm helloworld
+docker service inspect helloworld
+docker ps
+```
+
+### Apply rolling updates to a service
+
+```shell
+docker service create \
+  --replicas 3 \
+  --name redis \
+  --update-delay 10s \
+  redis:3.0.6
+
+docker service inspect --pretty redis
+docker service update --image redis:3.0.7 redis
+#docker service inspect --pretty redis
+docker service ps redis
+```
+
+### Drain a node on the swarm（下线一个节点）
+
+```shell
+docker node ls
+docker node update --avaliability drain node-id
+docker node inspect node-id
+docker service ps redis
+docker node update --avaliability active node-id
+docker node inspect node-id
+docker service scale redis=4
+```
+
+### Use swarm mode routing mesh
+
+```shell
+docker service create --name nginx --publish published=80,target=80 --replicas 2 nginx
+docker service ls
+docker service ps nginx
+```
+
+#### Bypass the routing mesh
+
+```shell
+docker service create --name dns-cache \
+  --publish published=53,target=53,protocol=udp,mode=host \
+  --mode global \
+  dns-cache
+```
+
