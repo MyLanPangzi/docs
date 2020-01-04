@@ -154,3 +154,200 @@ kubectl apply -R -f .
 1. 难以调试以及理解。（非常难。。。。）
 2. 部分更新会变得复杂。
 
+### 名称
+
+1. 名称：每个命名空间中的每种资源下每个对象的名字唯一。由客户命名。namespace/kind/name
+2. UID：集群中每个对象拥有唯一的UID。由系统生成。用于区分同一对象的历史纪录。
+
+### 命名空间
+
+**同一物理集群下的不同虚拟集群称之为命名空间。**
+
+#### 何时使用
+
+多用户跨多个团队或者项目时使用，几个或者几十个的不要考虑。
+
+命名空间提供了名称作用域，命名空间不能嵌套。
+
+在多用户下，命名空间用于划分集群资源。
+
+未来版本中，命名空间会统一对象的访问控制策略。
+
+资源的名称在命名空间中需要唯一，每个资源只能在一个命名空间下，区分资源优先考虑标签。
+
+#### 使用命名空间
+
+```shell
+kubectl get namespaces
+kubectl create namespace my-namespace
+kubectl run nginx --namespace=my-namespace --image=nginx
+kubectl create deployment nginx --image nginx --namespace=my-namespace
+kubectl get deployment -n my-namespace
+kubectl get pods -n my-namespace
+kubectl delete namespace my-namespace
+
+kubectl create namespace hiscat
+kubectl config set-context --current --namespace=hiscat
+kubectl config view --minify
+
+```
+
+#### 默认命名空间
+
+1. default：所有没有命名空间的对象都在这里。
+2. kube-system：kubernetes系统创建的对象都在这里。
+3. kube-pulibc：整个集群中可见的公共资源都放这里，只是一个通俗的约定并不是强制性。
+
+#### 命名空间与DNS
+
+创建服务时会默认创建一个DNS入口。DNS：服务名.命名空间.svc.cluster.local
+
+意味着，如果容器使用服务名，将会解析到本地命名空间下的服务。
+
+如果要跨多命名空间使用相同的配置则需要全限定域名（FQDN）。
+
+#### 并不是所有的对象都有命名空间
+
+大多数kubernetes对象都有命名空间，例如service，pod，deployment，replication，controller等。
+
+但是命名空间本身不属于命名空间，以及节点，持久化卷都没有命名空间。
+
+```shell
+kubectl api-resources --namespaced=true
+kubectl api-resources --namesapced=false
+```
+
+
+
+### 标签以及选择器
+
+#### 标签是什么
+
+metadata.labels节点下的键值对，用于指定识别属性，有意义且与用户相关，并不意味着核心系统的语义。
+
+用于组织以及选择一组子对象。可以在对象创建时附加也可以后续修改。每个key必须唯一。
+
+标签允许高效的查询和监听，最适合UI以及命令行使用。非识别信息应使用注释。
+
+#### 动机
+
+1. 以松散耦合的方式映射自己特有的组织结构到对象上，而不需要客户端存储这些映射。
+2. 跨多维度实体操作。
+
+#### 语法
+
+**prefix/label**：
+
+prefix:可选前缀，如果有必须是DNS子域名，总长不能超过253个字符，用点拆分子域名。
+
+label:  63及位以内数字字母开头或结尾，中间可用数字字母，下划线，横杠，点
+
+如果省略前缀，则默认key为用户私有。
+
+自动化系统组件或第三方插件必须指定前缀。
+
+kubernetes.io/或者k8s.io保留给K8S核心组件。
+
+**value:**
+
+63个字符及以内，数字字母开头或结尾，中间可用-_.
+
+#### 选择器
+
+通过标签选择器可以识别一组对象。标签选择器是kubernetes的核心分组原语。
+
+目前支持2种选择器：等价性选择器，集合选择器。
+
+一个选择器可以由多个条件组成，用逗号分隔。每个逗号相当于逻辑或运算符。
+
+空的选择器或未指定的选择器取决于上下文，使用选择器的API类型，应当记录他们的有效性以及含义。
+
+某些选择器，选择的资源不能重叠，例如ReplicaSet。
+
+#### 等价行选择器
+
+=，==，!=
+
+```shell
+kubectl get pods -l app=nginx
+kubectl get pods -l app!=nginx
+```
+
+#### 集合选择器
+
+in，notin，exists
+
+```shell
+kubectl get pods -l 'app in (nginx,redis)'
+kubectl get pods -l 'app notin (redis)'
+kubectl get pods -l 'app'
+```
+
+#### 在API对象中设置引用
+
+Service以及ReplicationController可以在selector自动引用其他资源，但只支持等价性选择器。
+
+```yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 80
+```
+
+**Job，Deployment，Replica Set，Daemon支持集合选择器。**
+
+**支持等价性选择器。** 
+
+  selector:
+    matchLabels:
+      enviroment: development
+
+**支持集合选择器，操作符有In，NotIn，Exists，DoesNotExist**
+
+    matchExpressions:
+      - key: tier
+        operator: In
+        values:
+          - frontend
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      enviroment: development
+    matchExpressions:
+      - key: tier
+        operator: In
+        values:
+          - frontend
+  template:
+    metadata:
+      labels:
+        enviroment: development
+        tier: frontend
+    spec:
+      containers:
+        - name: nginx-dev
+          image: nginx
+
+```
+
+**节点选择器**
+
+### 注释
+
+### 字段选择器
+
+### 建议标签
+
