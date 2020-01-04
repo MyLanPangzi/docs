@@ -1,5 +1,7 @@
 # K8S概念
 
+[TOC]
+
 ## 大纲
 
 ### 组件
@@ -370,5 +372,68 @@ spec:
 
 ### 字段选择器
 
+#### 是什么
+
+**通过资源的字段名进行过滤。**
+
+**所有的资源都支持metadata.name以及metadata.namespace字段选择器。**
+
+**如果使用不支持的字段选择器会报错。**
+
+```shell
+kubectl get pods --all-namspaces --field-selector status.phase=Running
+kubectl get pods --field-selector ''
+```
+
+**支持的操作符：=，!=，==。**
+
+**可以链式选择，用逗号分隔。**
+
+**可以选择多资源类型。**
+
+```shell
+kubectl get pods --all-namespace --field-selector status.phase=Running,spec.restartPolicy=Always
+kubectl get statefulsets,svc --all-namespace --field-selector metadata.namespace=default
+
+```
+
 ### 建议标签
+
+**使用一组常见的标签使得工具具有更好的互操作性，并且易于理解。**
+
+**建议化的标签能更好的查询应用。**
+
+元数据是围绕应用程序的概念进行组织的，K8S不提供也不强制实施应用程序的概念。
+
+应用是非正式且以元数据进行描述的，应用程序内容的定义是松散的。
+
+#### 常用标签
+
+| Key                          | 描述               | 案例          | 类型   |
+| ---------------------------- | ------------------ | ------------- | ------ |
+| app.kubernetes.io/name       | 应用名称           | mysql         | string |
+| app.kubernetes.io/instance   | 唯一的实例名称     | rbac-10.2.2.3 | string |
+| app.kubernetes.io/version    | 版本号             | 1.0.0         | string |
+| app.kubernetes.io/component  | 架构组件           | database      | string |
+| app.kubernetes.io/part-of    | 所属高层应用名     | hiscat        | string |
+| app.kubernetes.io/managed-by | 管理应用操作的工具 | helm          | string |
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: disvoery
+    app.kubernetes.io/instance: discovery-deployment
+    app.kubernetes.io/version: 1.0.0
+    app.kubernetes.io/component: discovery
+    app.kubernetes.io/part-of: hiscat-blog
+    
+```
+
+#### 应用程序以及应用程序实例
+
+在集群中一个应用能安装多次，某些情况下是在同一个命名空间中。
+
+应用程序名以及实例名是单独记录的。每个实例的实例名必须唯一。
 
