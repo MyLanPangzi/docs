@@ -73,6 +73,11 @@ docker tag registry.cn-hangzhou.aliyuncs.com/twocat/kube-apiserver:1.17.0 k8s.gc
 
 3. 配置网络插件calico
 
+   1. ```shell
+      wget https://docs.projectcalico.org/v3.7/manifests/calico.yaml
+      需要修改Deployment DaemonSet配置的apiVersion: apps/v1，注意加上spec.selector
+      ```
+
 4. 运行实例
 
    ```

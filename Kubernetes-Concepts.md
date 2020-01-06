@@ -437,3 +437,152 @@ metadata:
 
 应用程序名以及实例名是单独记录的。每个实例的实例名必须唯一。
 
+### 节点
+
+K8S中一个节点是一台工作机，可以是虚拟机也可以是物理机。
+
+每个节点包含着运行Pods的必要服务以及受Master组件管理。
+
+节点服务包括容器运行时，kubelet，kubeproxy。
+
+#### 节点状态
+
+一个节点的状态包含四个信息。
+
+- 地址
+- 条件
+- 容量以及可分配资源
+- 通用信息
+
+```shell
+kubectl describe node nodeName
+```
+
+##### 地址
+
+- HostName：主机名，由节点内核显示。--hostname-override参数重写。
+- ExternalIP：外部IP，由外部路由分配。
+- InternalIP：内部IP，由K8S集群分配。
+
+每个字段的使用取决于裸机配置或云厂商。
+
+##### 条件
+
+描述了所有运行节点的状态。
+
+| 节点条件           | 描述                                                         |
+| ------------------ | ------------------------------------------------------------ |
+| Ready              | True，表示节点健康且准备接受Pods。Unknow表示节点控制器没有收到此节点最后一个周期的心跳（默认40S）。node-monitor-grace-period |
+| MemoryPressure     | True，表示可用内存过低。                                     |
+| PIDPressure        | True，表示节点进程过多。                                     |
+| DiskPressure       | True，表示节点可用磁盘容量过低。                             |
+| NetworkUnavailable | True，表示节点网络配置不正确。                               |
+
+```json
+"conditions": [
+  {
+    "type": "Ready",
+    "status": "True",
+    "reason": "KubeletReady",
+    "message": "kubelet is posting ready status",
+    "lastHeartbeatTime": "2019-06-05T18:38:35Z",
+    "lastTransitionTime": "2019-06-05T11:41:27Z"
+  }
+]
+```
+
+**如果Ready类型下的status字段是True或者Unknown的状态持续超过pod-eviction-timeout，则此节点上的Pods会被节点控制器删除。默认是五分钟。**
+
+当节点与主节点不能通讯时，Pods仍然可以运行在Node上，直到与Master恢复通讯。
+
+1.5以前的版本Node Controller会删除不可达的Pods。
+
+1.5以后的版本，不会删除，直到确认已经停止。此时Pods状态为Terminating或者Unknown。
+
+当节点永久的离开集群时，K8S无法推断节点不可达，需要管理员手动删除节点对象，此时会删除节点上所有的Pods，以及释放它们的名字。
+
+The node lifecycle controller automatically creates [taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) that represent conditions. When the scheduler is assigning a Pod to a Node, the scheduler takes the Node’s taints into account, except for any taints that the Pod tolerates.
+
+##### **容量以及可分配资源**
+
+描述了节点的可用资源，包括cpu，内存，最大数量Pods。
+
+capacity块描述了节点拥有资源的总数，allocatable块描述了节点可被Pods消费的资源。
+
+##### 通用信息
+
+描述了通用信息，包括内核版本，K8S版本，Docker版本，操作系统名称等。
+
+#### 管理
+
+Node是由外部创建的。metadata.name字段是节点IP。K8S会周期性的通过name字段进行健康检查。直到节点有效或者Node对象删除。
+
+```json
+{
+  "kind": "Node",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "10.240.79.157",
+    "labels": {
+      "name": "my-first-k8s-node"
+    }
+  }
+}
+```
+
+##### 节点控制器
+
+Master组件，管理节点的多个方面。
+
+拥有多个角色，在节点的生命周期中。
+
+- 当节点注册时，赋予CIDR块给节点（如果CIDR块赋值开关打开）
+- 保持内部节点列表与云提供商的可用机器一致。
+- 监控节点健康。负责更新的NodeStatus的NodeReady条件。每--node-monitor-period周期检查节点状态，默认是40S。
+
+###### 心跳
+
+两种心跳：更新NodeStatus的心跳以及Lease Object的心态（租约对象）。
+
+每个节点在kube-node-lease命名空间中关联了一个lease对象。lease是一个轻量级的资源，随着节点的伸缩改善了阶段的心跳性能。
+
+kublet负责创建以及更新NodeStatus和Lease对象。
+
+默认五分钟更新一次NodeStatus对象。
+
+默认十秒钟更新一次Lease Object。Lease的更新独立于NodeStatus。
+
+###### 可靠性
+
+从1.4开始，当Node Controller决定驱逐Pods时会检查所有节点的状态。
+
+大多数情况下，驱逐比率是--node-eviction-rate（0.1），每十秒驱逐一个。
+
+当node在一个给定zone变得不健康时，evication行为将会发生改变，node controller会检查坏死率。默认是阈值是--unhealthly-zon-threshold（0.55），如果大于该阈值，则会减少eviction rate。
+
+如果集群数量小于--large-cluster-size-threshold（50），eviction会停止，否则eviction rate会减少至--secondary-node-eviction-rate（0.01）也就是100秒一个。
+
+主要是应对跨zone的集群，增加可用性。当某个zone不可用时，可以将负载转移到健康zone。
+
+当所有node都在一个zone时，--node-eviction-rate是正常的0.1.
+
+极端情况，所有zone都不可用时，node controller会假设master发生了连接性问题，然后停止eviction直到连接恢复。
+
+从1.6开始，当Pods不能tolerate NoExcute taints时，node controller同样也负责evicting 带有NoExcute taints节点的Pods。
+
+从1.8开始负责创建描述节点条件的taints。
+
+#### 节点的自我注册
+
+kubelet的--register-node默认为true，会自动注册到api server。自我注册选项
+
+- --kubeconfig。注册凭证以及服务路径。Path to credentials to authenticate itself to the apiserver.
+- --cloud-provider。读取自身元数据，以及与云提供商会话。
+- --register-node。自动注册到api server。
+- --register-with-taints。注册taints
+- --node-ip。节点IP
+- --node-lables。节点标签，用于Pods的标签选择器。
+- --node-status-update-frequency。制定多久汇报一次节点状态给master。
+
+
+
