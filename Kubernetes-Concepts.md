@@ -78,7 +78,7 @@ spec:
 
 1. apiVersion：使用哪个版本的API。
 2. kind：对象类型。
-3. matadata：对象元素，用于标志对象的唯一性。
+3. matadata：对象元数据，用于标志对象的唯一性。
 4. spec：描述对象的期望状态。
 
 ### K8S对象管理

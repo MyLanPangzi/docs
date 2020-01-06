@@ -5,7 +5,7 @@
 ```shell
 cp /etc/apt/sources.list /etc/apt/sources.list.bak
 vim /etc/apt/sources.list
-#:%s/us.archive.ubuntu.com/mirrors.aliyun.com
+#:%s/cn.archive.ubuntu.com/mirrors.aliyun.com
 ```
 
 
@@ -36,11 +36,11 @@ netplan apply
 ```yml
 network:
   ethernets:
-    enp4s0:
-      addresses: [192.168.0.20/24]
-      gateway4: 192.168.0.1
+    ens33: #注意配置网卡
+      addresses: [192.168.11.138/24]
+      gateway4: 192.168.11.2
       nameservers:
-        addresses: [114.114.114.114, 192.168.0.1]
+        addresses: [114.114.114.114, 192.168.11.2]
       dhcp4: no
       optional: no
   version: 2
@@ -108,5 +108,22 @@ hostnamectl set-hostname ubuntu18-server
 vim /etc/cloud/cloud.cfg
 
 #preserve_hostname: true
+```
+
+## 扩容
+
+```shell
+#查看磁盘使用情况
+df -h
+#查看卷组使用情况
+vgdisplay
+#分配磁盘
+lvextend -l 50G /dev/mapper/ubuntu1604--vg-root
+lvextend -l +100%FREE /dev/mapper/ubuntu1604--vg-root
+#重新计算大小
+resize2fs  /dev/mapper/ubuntu1604--vg-root
+#查看磁盘使用情况
+df -h
+vgdisplay
 ```
 

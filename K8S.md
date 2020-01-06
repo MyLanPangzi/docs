@@ -40,6 +40,35 @@ docker tag registry.cn-hangzhou.aliyuncs.com/twocat/kube-apiserver:1.17.0 k8s.gc
 
 1. **搭建之前，先下载谷歌镜像，参考谷歌镜像构建一节。确保每个节点都有镜像**
 
+   1. ```shell
+      docker pull registry.cn-hangzhou.aliyuncs.com/twocat/kube-apiserver:1.17.0
+      docker pull registry.cn-hangzhou.aliyuncs.com/twocat/kube-controller-manager:1.17.0
+      docker pull registry.cn-hangzhou.aliyuncs.com/twocat/kube-proxy:1.17.0
+      docker pull registry.cn-hangzhou.aliyuncs.com/twocat/kube-scheduler:1.17.0
+      docker pull registry.cn-hangzhou.aliyuncs.com/twocat/etcd:3.4.3-0
+      docker pull registry.cn-hangzhou.aliyuncs.com/twocat/coredns:1.6.5
+      docker pull registry.cn-hangzhou.aliyuncs.com/twocat/pause:3.1
+      docker pull registry.cn-hangzhou.aliyuncs.com/twocat/nginx-ingress-controller:0.26.2
+      
+      docker tag registry.cn-hangzhou.aliyuncs.com/twocat/kube-apiserver:1.17.0 k8s.gcr.io/kube-apiserver:1.17.0
+      docker tag registry.cn-hangzhou.aliyuncs.com/twocat/kube-controller-manager:1.17.0 k8s.gcr.io/kube-controller-manager:1.17.0
+      docker tag registry.cn-hangzhou.aliyuncs.com/twocat/kube-proxy:1.17.0 k8s.gcr.io/kube-proxy:1.17.0
+      docker tag registry.cn-hangzhou.aliyuncs.com/twocat/kube-scheduler:1.17.0 k8s.gcr.io/kube-scheduler:1.17.0
+      docker tag registry.cn-hangzhou.aliyuncs.com/twocat/etcd:3.4.3-0 k8s.gcr.io/etcd:3.4.3-0
+      docker tag registry.cn-hangzhou.aliyuncs.com/twocat/coredns:1.6.5 k8s.gcr.io/coredns:1.6.5
+      docker tag registry.cn-hangzhou.aliyuncs.com/twocat/pause:3.1 k8s.gcr.io/pause:3.1
+      docker tag registry.cn-hangzhou.aliyuncs.com/twocat/nginx-ingress-controller:0.26.2 quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.26.2
+      
+      docker rmi registry.cn-hangzhou.aliyuncs.com/twocat/kube-apiserver:1.17.0
+      docker rmi registry.cn-hangzhou.aliyuncs.com/twocat/kube-controller-manager:1.17.0
+      docker rmi registry.cn-hangzhou.aliyuncs.com/twocat/kube-proxy:1.17.0
+      docker rmi registry.cn-hangzhou.aliyuncs.com/twocat/kube-scheduler:1.17.0
+      docker rmi registry.cn-hangzhou.aliyuncs.com/twocat/etcd:3.4.3-0
+      docker rmi registry.cn-hangzhou.aliyuncs.com/twocat/coredns:1.6.5
+      docker rmi registry.cn-hangzhou.aliyuncs.com/twocat/pause:3.1
+      docker rmi registry.cn-hangzhou.aliyuncs.com/twocat/nginx-ingress-controller:0.26.2
+      ```
+
 2. 初始化master节点
 
 3. 配置网络插件calico
@@ -97,7 +126,7 @@ dns:
 etcd:
   local:
     dataDir: /var/lib/etcd
-imageRepository: https://a17tqp4p.mirror.aliyuncs.com
+imageRepository: registry.aliyuncs.com/google_containers
 kind: ClusterConfiguration
 kubernetesVersion: v1.17.0
 networking:
@@ -119,6 +148,38 @@ kubectl apply -f https://docs.projectcalico.org/v3.11/manifests/calico.yaml
 ```
 
 ## 配置kubectl命令行提示
+
+```shell
+ # Installing bash completion on Linux
+  ## If bash-completion is not installed on Linux, please install the 'bash-completion' package
+  ## via your distribution's package manager.
+  ## Load the kubectl completion code for bash into the current shell
+  source <(kubectl completion bash)
+  ## Write bash completion code to a file and source if from .bash_profile
+  kubectl completion bash > ~/.kube/completion.bash.inc
+  printf "
+  # Kubectl shell completion
+  source '$HOME/.kube/completion.bash.inc'
+  " >> $HOME/.bash_profile
+  source $HOME/.bash_profile
+
+```
+
+
+
+## 配置Docker远程链接
+
+```json
+{
+    "registry-mirrors": ["https://a17tqp4p.mirror.aliyuncs.com"]，
+    "hosts": ["unix:///var/run/docker.sock","tcp://127.0.0.1:2375","tcp://192.168.2.10:2375"]
+
+}
+```
+
+
+
+
 
 ## 通过资源配置运行容器
 
