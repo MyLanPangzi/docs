@@ -266,7 +266,7 @@ kubernetes.io/或者k8s.io保留给K8S核心组件。
 
 某些选择器，选择的资源不能重叠，例如ReplicaSet。
 
-#### 等价行选择器
+#### 相等选择器
 
 =，==，!=
 
@@ -437,6 +437,8 @@ metadata:
 
 应用程序名以及实例名是单独记录的。每个实例的实例名必须唯一。
 
+## 集群架构
+
 ### 节点
 
 K8S中一个节点是一台工作机，可以是虚拟机也可以是物理机。
@@ -503,7 +505,7 @@ kubectl describe node nodeName
 
 The node lifecycle controller automatically creates [taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) that represent conditions. When the scheduler is assigning a Pod to a Node, the scheduler takes the Node’s taints into account, except for any taints that the Pod tolerates.
 
-##### **容量以及可分配资源**
+##### 容量以及可分配资源
 
 描述了节点的可用资源，包括cpu，内存，最大数量Pods。
 
@@ -584,5 +586,120 @@ kubelet的--register-node默认为true，会自动注册到api server。自我�
 - --node-lables。节点标签，用于Pods的标签选择器。
 - --node-status-update-frequency。制定多久汇报一次节点状态给master。
 
+### 主节点通信
 
+### 控制器
 
+### CCM（云控制器管理器）
+
+## 容器
+
+## 负载
+
+### Pods
+
+### Controller
+
+## 服务，负载均衡，网络
+
+### Endpoint Slices
+
+### 服务
+
+### 服务拓扑
+
+### 服务与Pods的DNS
+
+### 使用服务连接应用程序
+
+### Ingress
+
+### Ingress Controllers
+
+### 网络策略
+
+### 使用主机别名添加入口至Pod的/ets/hosts
+
+### IPv4/IPv6 dual-stack
+
+## 存储
+
+### 卷
+
+### 持久卷
+
+### 卷快照
+
+### CSI卷克隆
+
+### 存储类
+
+### 卷快照类
+
+### 动态卷供应
+
+### 特殊节点卷限制
+
+## 配置
+
+### 配置最佳实践
+
+### Resource Bin Packing for Extended Resources
+
+### 管理容器计算资源
+
+### Pod Overhead
+
+### 赋予Pod至节点
+
+### 污点与容错
+
+### Secrets
+
+### 使用kubeconfig文件组织集群访问
+
+### Pod优先级与抢占
+
+### 调度框架
+
+## 安全
+
+## 策略
+
+### Limit Ranges
+
+### Resource Quotas
+
+### Pod Security Policies
+
+## 调度
+
+### K8S调度器
+
+### 调度器性能调优
+
+## 集群管理
+
+### 集群管理大纲
+
+### 证书
+
+### 云提供商
+
+### 管理资源
+
+### 集群网络
+
+### 日志架构
+
+### 配置kubelet垃圾回收器
+
+### Federation
+
+### K8S中的代理
+
+### Controller manager metrics
+
+### 安装插件
+
+## 扩展
