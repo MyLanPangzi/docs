@@ -8,7 +8,7 @@
 
 - 部署一个Provider。
 
-- Provier通过ServiceName注册到Server。
+- Provider通过Service Name注册到Server。
 - 暴露Server至外部，可通过IP:Port访问，验证Provider是否注册成功。
 
 ### Steps
