@@ -452,3 +452,27 @@
 
 **其实服务的默认DNS为：服务名.default.svc.cluster.local。**
 
+## 拉取私有镜像
+
+### Goal
+
+配置Node从私有仓库中拉取镜像。
+
+### Steps
+
+1. 搭建Private Registry
+2. 配置Node
+3. 编写Deployment
+4. 部署
+
+### Summary
+
+## 在容器中使用环境变量
+
+### Goal
+
+在容器中使用自定义环境变量，集群信息环境变量，服务环境变量。
+
+### Steps
+
+### Suammary
