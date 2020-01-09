@@ -793,9 +793,49 @@ CCM继承了KCM的功能
 
 #### 插件机制
 
+CCM使用Go接口，云厂商可自定义实现。
+
 #### 授权
 
+**Node Controller**
+
+只操作节点对象， It requires full access to get, list, create, update, patch, watch, and delete Node objects.
+
+**Route Controller**
+
+监听节点的创建，配置合适的路由。 It requires get access to Node objects.
+
+**Service Controller**
+
+监听Service Object的创建，更新，删除事件，然后配置合适的终端对象。
+
+v1/Service:
+
+- List
+- Get
+- Watch
+- Patch
+- Update
+
+**Other**
+
+CCM核心实现要求能够创建事件，以及服务账号的创建。
+
+v1/Event:
+
+- Create
+- Patch
+- Update
+
+v1/ServiceAccount:
+
+- Create
+
 #### 厂商实现
+
+- AWS
+- Azure
+- OpenStack
 
 #### 集群管理
 
