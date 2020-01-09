@@ -260,7 +260,7 @@ kubernetes.io/或者k8s.io保留给K8S核心组件。
 
 目前支持2种选择器：等价性选择器，集合选择器。
 
-一个选择器可以由多个条件组成，用逗号分隔。每个逗号相当于逻辑或运算符。
+一个选择器可以由多个条件组成，用逗号分隔。每个逗号相当于逻辑与运算符。
 
 空的选择器或未指定的选择器取决于上下文，使用选择器的API类型，应当记录他们的有效性以及含义。
 
@@ -458,6 +458,81 @@ K8S中一个节点是一台工作机，可以是虚拟机也可以是物理机�
 
 ```shell
 kubectl describe node nodeName
+Name:               k8s-server
+Roles:              master
+Labels:             beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/os=linux
+                    kubernetes.io/arch=amd64
+                    kubernetes.io/hostname=k8s-server
+                    kubernetes.io/os=linux
+                    node-role.kubernetes.io/master=
+Annotations:        kubeadm.alpha.kubernetes.io/cri-socket: /var/run/dockershim.sock
+                    node.alpha.kubernetes.io/ttl: 0
+                    projectcalico.org/IPv4Address: 192.168.2.10/24
+                    projectcalico.org/IPv4IPIPTunnelAddr: 192.168.185.128
+                    volumes.kubernetes.io/controller-managed-attach-detach: true
+CreationTimestamp:  Mon, 06 Jan 2020 07:29:42 +0800
+Taints:             node-role.kubernetes.io/master:NoSchedule
+Unschedulable:      false
+Lease:
+  HolderIdentity:  k8s-server
+  AcquireTime:     <unset>
+  RenewTime:       Thu, 09 Jan 2020 06:31:02 +0800
+Conditions: #条件信息
+  Type                 Status  LastHeartbeatTime                 LastTransitionTime                Reason                       Message
+  ----                 ------  -----------------                 ------------------                ------                       -------
+  NetworkUnavailable   False   Mon, 06 Jan 2020 07:51:44 +0800   Mon, 06 Jan 2020 07:51:44 +0800   CalicoIsUp                   Calico is running on this node
+  MemoryPressure       False   Thu, 09 Jan 2020 06:27:34 +0800   Mon, 06 Jan 2020 07:29:38 +0800   KubeletHasSufficientMemory   kubelet has sufficient memory available
+  DiskPressure         False   Thu, 09 Jan 2020 06:27:34 +0800   Mon, 06 Jan 2020 07:29:38 +0800   KubeletHasNoDiskPressure     kubelet has no disk pressure
+  PIDPressure          False   Thu, 09 Jan 2020 06:27:34 +0800   Mon, 06 Jan 2020 07:29:38 +0800   KubeletHasSufficientPID      kubelet has sufficient PID available
+  Ready                True    Thu, 09 Jan 2020 06:27:34 +0800   Mon, 06 Jan 2020 07:51:27 +0800   KubeletReady                 kubelet is posting ready status. AppArmor enabled
+Addresses: #地址信息
+  InternalIP:  192.168.2.10
+  Hostname:    k8s-server
+Capacity:#容量信息
+  cpu:                2
+  ephemeral-storage:  19540624Ki
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             2017840Ki
+  pods:               110
+Allocatable:#可分配信息
+  cpu:                2
+  ephemeral-storage:  18008639049
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             1915440Ki
+  pods:               110
+System Info:#通用信息
+  Machine ID:                 a7844a3135874a6bb66b0207bfabc345
+  System UUID:                08914D56-5EF1-70CB-B6F2-5AFD65696049
+  Boot ID:                    7cb1182a-1020-42a4-bd35-6c87288135fd
+  Kernel Version:             4.15.0-72-generic
+  OS Image:                   Ubuntu 18.04.3 LTS
+  Operating System:           linux
+  Architecture:               amd64
+  Container Runtime Version:  docker://18.9.7
+  Kubelet Version:            v1.17.0
+  Kube-Proxy Version:         v1.17.0
+PodCIDR:                      10.244.0.0/24
+PodCIDRs:                     10.244.0.0/24
+Non-terminated Pods:          (6 in total)
+  Namespace                   Name                                  CPU Requests  CPU Limits  Memory Requests  Memory Limits  AGE
+  ---------                   ----                                  ------------  ----------  ---------------  -------------  ---
+  kube-system                 calico-node-ds2cz                     250m (12%)    0 (0%)      0 (0%)           0 (0%)         2d22h
+  kube-system                 etcd-k8s-server                       0 (0%)        0 (0%)      0 (0%)           0 (0%)         2d23h
+  kube-system                 kube-apiserver-k8s-server             250m (12%)    0 (0%)      0 (0%)           0 (0%)         2d23h
+  kube-system                 kube-controller-manager-k8s-server    200m (10%)    0 (0%)      0 (0%)           0 (0%)         2d23h
+  kube-system                 kube-proxy-hcnkk                      0 (0%)        0 (0%)      0 (0%)           0 (0%)         2d23h
+  kube-system                 kube-scheduler-k8s-server             100m (5%)     0 (0%)      0 (0%)           0 (0%)         2d23h
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests    Limits
+  --------           --------    ------
+  cpu                800m (40%)  0 (0%)
+  memory             0 (0%)      0 (0%)
+  ephemeral-storage  0 (0%)      0 (0%)
+Events:              <none>
 ```
 
 ##### 地址
@@ -493,7 +568,7 @@ kubectl describe node nodeName
 ]
 ```
 
-**如果Ready类型下的status字段是True或者Unknown的状态持续超过pod-eviction-timeout，则此节点上的Pods会被节点控制器删除。默认是五分钟。**
+**如果Ready类型下的status字段是False或者Unknown的状态持续超过pod-eviction-timeout，则此节点上的Pods会被节点控制器删除。默认是五分钟。**
 
 当节点与主节点不能通讯时，Pods仍然可以运行在Node上，直到与Master恢复通讯。
 
@@ -546,7 +621,7 @@ Master组件，管理节点的多个方面。
 
 两种心跳：更新NodeStatus的心跳以及Lease Object的心态（租约对象）。
 
-每个节点在kube-node-lease命名空间中关联了一个lease对象。lease是一个轻量级的资源，随着节点的伸缩改善了阶段的心跳性能。
+每个节点在kube-node-lease命名空间中关联了一个lease对象。lease是一个轻量级的资源，随着节点的伸缩改善了节点的心跳性能。
 
 kublet负责创建以及更新NodeStatus和Lease对象。
 
@@ -588,9 +663,141 @@ kubelet的--register-node默认为true，会自动注册到api server。自我�
 
 ### 主节点通信
 
+分类Master与集群的通信路径，加强网络配置，以便在不受信任的网络部署集群。
+
+#### Cluster与Master通信
+
+集群中所有的通信路径都终止于api server。api server不对外暴露服务，内部配置监听443端口，启用多种认证与授权方式，特别是匿名请求以及服务账号token被允许时。
+
+集群中的节点应当被提供公共根证书，以便用于安全的连接到api server。
+
+Pods使用服务账号安全的连接到api server。在实例化的时候K8S会自动的注入证书以及token。
+
+kubernetes服务对外暴露了一个虚拟IP用于重定向至HTTPS的终端。
+
+master组件同样也可以通过HTTPS端口与api server通信。
+
+节点与master的通信默认是安全的，能够运行在不安全的网络中。
+
+#### Master与Cluster通信
+
+1. 通过kubelet进行RPC通信。
+   1. 用于抓取Pods日志。
+   2. 附加到运行的Pods。
+   3. 提供端口转发功能。
+2. 通过kubeproxy进行通信。
+
+连接终止于kubelet的HTTPS端口。默认的，api server不校验kubelet证书，这使得连接容易遭受中间人攻击，不能安全的运行在不受信任的网络中。
+
+使用--kubelet-certificate-authority标志，并为apiserver提供根证书包来验证证书。
+
+如果不能提供，则可以使用SSH隧道进行安全通信。（但以标记过期。。。）
+
+apiserver到node,pods,service的连接是plain HTTP且未加密，未认证。
+
+目前master与节点的通信，是不安全的，不能对外暴露。
+
 ### 控制器
 
+**控制器是一个非终止回路，调节系统的状态与期望状态匹配。**
+
+#### 控制器模式
+
+一个控制器至少跟踪了一种资源类型。对象的spec字段描述了期望状态，控制器负责控制实际状态以匹配期望状态。
+
+控制器通过apiserver来管理状态。
+
+某些控制器需要对集群外部的资源做出改变。例如节点控制器。
+
+#### 期望与现实
+
+集群会随着工作的发生以及控制回路的自动修复而发生改变，这意味着，集群永远不会达到一个稳定状态。
+
+只要控制器能做出有效改变，稳不稳定不重要。
+
+#### 设计
+
+K8S的设计原则，每个控制器管理一个特殊的集群状态。大多数控制器使用一种资源来描述期望状态，并使用另一种资源来做出改变以匹配期望状态。控制器被设计为允许失败。
+
+控制器之间可能创建或更新同一种资源，但只更新自己关心的资源，不会更新到其他控制器的资源。
+
+#### 运行controller的方式
+
+通过kube-contolelr-manager运行，内部会自动管理失败的控制器。
+
 ### CCM（云控制器管理器）
+
+目的是为了K8S能独立的演化，不涉及特定云厂商的代码。CCM与Master组件一起运行，能作为插件启动，运行在K8S之上。
+
+CCM基于插件机制进行设计，运行新的云提供商以插件的方式轻松集成K8S。
+
+未使用CCM的架构
+
+![](images\pre-ccm-arch.png)
+
+#### 设计
+
+未使用CCM的架构通过：
+
+1. kubelet
+2. apiserver
+3. contoller manager
+
+与云提供商进行集成。
+
+使用CCM的架构：
+
+![](images\post-ccm-arch.png)
+
+#### CCM组件
+
+KCM云依赖组件：
+
+- Node Controller
+- Volume Controller
+- Route Contoller
+- Service Controller
+
+CCM运行的控制器：
+
+- Node Controller
+- Route Controller
+- Service Controller
+
+Volume Controller打算使用CSI（容器存储接口）替代。
+
+#### CCM功能
+
+CCM继承了KCM的功能
+
+**节点控制器**：
+
+**从云提供商获取节点信息，用于节点的初始化。**
+
+1. 用云特定的Zone/Region 标签初始化节点。
+2. 使用特定于云实例的详细信息初始化节点，例如类型，大小。
+3. 获取IP以及主机名。
+4. 当节点无法响应时，检查cloud是否删除此实例，如果删除，则删除K8S Node对象。
+
+**路由控制器：**
+
+负责节点路由，跨节点容器通信，目前只有谷歌支持。。。
+
+**服务控制器：**
+
+监听服务的CRUD事件。基于当前状态，配置LB反应服务状态。确保LB是最新的。
+
+**kubelet**
+
+初始化无关于cloud provider的节点信息，并给节点打上污点标记，直到CCM初始化完特定云信息。
+
+#### 插件机制
+
+#### 授权
+
+#### 厂商实现
+
+#### 集群管理
 
 ## 容器
 
