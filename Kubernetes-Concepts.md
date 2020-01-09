@@ -841,6 +841,188 @@ v1/ServiceAccount:
 
 ## 容器
 
+#### 镜像
+
+跟docker的语法一样。
+
+##### 更新镜像
+
+镜像默认更新策略是IfNotPresent，如果镜像存在则不会pull新镜像。
+
+- 设置imagePullPolicy为Always则永远pull镜像
+- 如果使用latest标签，则永远pull image
+- 省略imagePullPolicy以及tag，则永远pull image
+- 启用AlwaysPullImage 管理控制器。
+
+镜像应当避免使用:latest标签。 
+
+##### 使用清单构建多架构镜像
+
+Docker CLI现在支持docker manifest构建镜像。可以打包多个镜像到一个镜像。
+
+https://docs.docker.com/engine/reference/commandline/manifest/
+
+```shell
+docker manifest inspect imageName
+docker manifest create 
+docker manifest push
+docker manifest annotate
+docker manifest create 45.55.81.106:5000/coolapp:v1 \
+    45.55.81.106:5000/coolapp-ppc64le-linux:v1 \
+    45.55.81.106:5000/coolapp-arm-linux:v1 \
+    45.55.81.106:5000/coolapp-amd64-linux:v1 \
+    45.55.81.106:5000/coolapp-amd64-windows:v1
+Created manifest list 45.55.81.106:5000/coolapp:v1
+```
+
+这些命令只能在命令行使用。
+
+##### 使用私有注册表
+
+私有注册表可能需要密钥，在pull 镜像的时候。
+
+- Configuring Nodes to Authenticate to a Private Registry
+  - all pods can read any configured private registries
+  - requires node configuration by cluster administrator
+- Pre-pulled Images
+  - all pods can use any images cached on a node
+  - requires root access to all nodes to setup
+- Specifying ImagePullSecrets on a Pod
+  - only pods which provide own keys can access the private registry
+
+Docker存储私有化注册表在$HOME/.dockercfg或者$HOME/.docker/config.json文件中。
+
+kubelet拉取镜像时会读取这些配置用作凭证。
+
+- `{--root-dir:-/var/lib/kubelet}/config.json`
+- `{cwd of kubelet}/config.json`
+- `${HOME}/.docker/config.json`
+- `/.docker/config.json`
+- `{--root-dir:-/var/lib/kubelet}/.dockercfg`
+- `{cwd of kubelet}/.dockercfg`
+- `${HOME}/.dockercfg`
+- `/.dockercfg`
+
+配置私有化注册表建议步骤：
+
+1. ```shell
+   docker login [server]#在你想要使用凭证的节点上登录
+   #这会更新$HOME/.docker/config.json
+   ```
+
+2. 查看$HOME/.docker/config.json，确保已经认证。
+
+3. 获取节点列表
+
+   1. 获取节点名字 
+
+      ```shell
+      nodes=$(kubectl get nodes -o jsonpath='{range.items[*].metadata}{.name} {end}')
+      ```
+
+   2. 获取节点IP
+
+      ```shell
+      nodes=$(kubectl get nodes -o jsonpath='{range .items[*].status.addresses[?(@.type=="ExternalIP")]}{.address} {end}')
+      ```
+
+4. 拷贝config.json文件到上述路径中
+
+   1. ```
+      for n in $nodes; do scp ~/.docker/config.json root@$n:/var/lib/kubelet/config.json; done
+      ```
+
+5. 验证
+
+   ```shell
+   kubectl apply -f - <<EOF
+   apiVersion: v1
+   kind: Pod
+   metadata:
+     name: private-image-test-1
+   spec:
+     containers:
+       - name: uses-private-image
+         image: $PRIVATE_IMAGE_NAME
+         imagePullPolicy: Always
+         command: [ "echo", "SUCCESS" ]
+   EOF
+   #pod/private-image-test-1 created
+   kubectl logs private-image-test-1
+   kubectl describe pods/private-image-test-1 | grep "Failed"
+   
+   ```
+
+   **确保每个节点都有同样的配置。**
+
+可以预拉取镜像，这样可以绕过认证，必须设置imagePullPolicy为IfNotPresent或者Never。
+
+确保所有节点拉取了镜像。（K8S集群搭建的时候可以使用阿里的镜像或者自己拉取镜像）。
+
+**创建密钥与Docker Config文件。**只能在没有证书的时候创建，有证书的时候，参考：https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#registry-secret-existing-credentials
+
+```shell
+kubectl create secret docker-registry <name> --docker-server=DOCKER_REGISTRY_SERVER --docker-username=DOCKER_USER --docker-password=DOCKER_PASSWORD --docker-email=DOCKER_EMAIL
+
+```
+
+**在Pods中引用密钥**
+
+```shell 
+cat <<EOF > pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: foo
+  namespace: awesomeapps
+spec:
+  containers:
+    - name: foo
+      image: janedoe/awesomeapp:v1
+  imagePullSecrets:
+    - name: myregistrykey
+EOF
+
+cat <<EOF >> ./kustomization.yaml
+resources:
+- pod.yaml
+EOF
+```
+
+**用例：**
+
+1. 只运行在非专有镜像中，不需要隐藏镜像。无需配置。
+2. 某些镜像需要隐藏时，但对所有集群用户可见，可以搭建私有镜像仓库，在每个节点上配置密钥。
+3. 集群运行在专有镜像上，且有访问控制。开启镜像拉取控制器，控制敏感数据。
+4. 运行在多租户环境中，每个租户需要一个私有镜像。开启镜像拉取控制器，运行私有仓库，每个租户生成不同的凭证，并为每个租户的命名空间设置密钥，租户添加密钥至命名空间的imagePullSecrets。
+5. 如果需要访问多仓库，则每个仓库创建一个密钥。kubelet会合并这些密钥至.docker/config.json中。
+
+#### 容器环境变量
+
+K8S容器环境提供了几个重要的资源：
+
+- 一个文件系统，这是一个镜像与一个或多个卷的组合。
+- 关于容器的信息。
+- 集群中其他节点的信息。
+
+##### 容器信息
+
+容器的hostname就是Pod的名字。
+
+Pods名以及namespace作为环境变量传递至容器。
+
+用户自定义的环境变量同样可用。
+
+##### 集群信息
+
+当容器创建时，集群中所有正在运行的服务作为环境变量传递至容器。环境变量匹配docker 的--link语法。
+
+容器内可通过dns访问外部服务，如果DNS插件启用。
+
+#### 容器运行类别
+
+#### 容器生命周期钩子
+
 ## 负载
 
 ### Pods
