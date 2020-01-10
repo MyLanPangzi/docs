@@ -36,6 +36,165 @@ docker tag registry.cn-hangzhou.aliyuncs.com/twocat/kube-apiserver:1.17.0 k8s.gc
 
 参考Ubuntu.md
 
+### 官网教程
+
+1. 创建一个集群![img](https://d33wubrfki0l68.cloudfront.net/99d9808dcbf2880a996ed50d308a186b5900cec9/40b94/docs/tutorials/kubernetes-basics/public/images/module_01_cluster.svg)
+
+   ```
+     minikube version
+         minikube start
+         kubectl version
+         kubectl cluster-info
+         kubectl get nodes
+   ```
+
+2. 部署一个应用
+
+![img](https://d33wubrfki0l68.cloudfront.net/152c845f25df8e69dd24dd7b0836a289747e258a/4a1d2/docs/tutorials/kubernetes-basics/public/images/module_02_first_app.svg)
+
+```
+kubectl version
+kubectl get nodes
+kubectl create deployment nginx --image=nginx
+kubectl get deployments
+kubectl proxy
+curl localhost:8001
+```
+
+**Deployments负责创建，更新你的应用程序实例。**
+
+**部署在kubernets中的应用需要容器化。**
+
+
+
+3.探索你的应用
+
+![img](https://d33wubrfki0l68.cloudfront.net/fe03f68d8ede9815184852ca2a4fd30325e5d15a/98064/docs/tutorials/kubernetes-basics/public/images/module_03_pods.svg)
+
+***A Pod is a group of one or more application containers (such as Docker or rkt) and includes shared storage (volumes), IP address and information about how to run them.***
+
+![img](https://d33wubrfki0l68.cloudfront.net/5cb72d407cbe2755e581b6de757e0d81760d5b86/a9df9/docs/tutorials/kubernetes-basics/public/images/module_03_nodes.svg)
+
+***Containers should only be scheduled together in a single Pod if they are tightly coupled and need to share resources such as disk.***
+
+***A node is a worker machine in Kubernetes and may be a VM or physical machine, depending on the cluster. Multiple Pods can run on one Node.***
+
+```shell
+kubectl get pods
+kubectl describe pods
+echo -e "\n\n\n\e[92mStarting Proxy. After starting it will not output a response. Please click the first Terminal Tab\n"; kubectl proxy
+export POD_NAME=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')
+echo Name of the Pod: $POD_NAME
+curl http://localhost:8001/api/v1/namespaces/default/pods/$POD_NAME/proxy/
+kubectl logs $POD_NAME
+kubectl exec $POD_NAME env
+kubectl exec -ti $POD_NAME bash
+cat server.js
+curl localhost:8080
+exit
+```
+
+**4.暴露你的服务**
+
+![img](https://d33wubrfki0l68.cloudfront.net/cc38b0f3c0fd94e66495e3a4198f2096cdecd3d5/ace10/docs/tutorials/kubernetes-basics/public/images/module_04_services.svg)
+
+***A Kubernetes Service is an abstraction layer which defines a logical set of Pods and enables external traffic exposure, load balancing and service discovery for those Pods.***
+
+***You can create a Service at the same time you create a Deployment by using
+`--expose` in kubectl.***
+
+![img](https://d33wubrfki0l68.cloudfront.net/b964c59cdc1979dd4e1904c25f43745564ef6bee/f3351/docs/tutorials/kubernetes-basics/public/images/module_04_labels.svg)
+
+```shell 
+kubectl get pods #查询Pods
+kubectl get services #查询服务
+kubectl expose deployment/kubernetes-bootcamp --type="NodePort" --port 8080 #暴露服务
+kubectl get services #查询服务
+kubectl describe services/kubernetes-bootcamp #查询服务详情
+export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')#导出服务端口
+echo NODE_PORT=$NODE_PORT
+curl $(minikube ip):$NODE_PORT#验证服务
+kubectl describe deployment#查询deploymeng详情
+kubectl get pods -l run=kubernetes-bootcamp#根据标签查询Pods
+kubectl get services -l run=kubernetes-bootcamp#根据标签查询服务
+export POD_NAME=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')#导出POD_NAME
+echo Name of the Pod: $POD_NAME
+kubectl label pod $POD_NAME app=v1#给Pod加上新标签
+kubectl describe pods $POD_NAME#查询Pods详情，验证新标签
+kubectl get pods -l app=v1#根据新标签查询Pods
+kubectl delete service -l run=kubernetes-bootcamp#根据标签删除服务
+kubectl get services#验证服务是否删除
+curl $(minikube ip):$NODE_PORT#验证外部是否可访问
+kubectl exec -ti $POD_NAME curl localhost:8080#验证Pods内部是否可访问
+
+```
+
+5.**扩容**
+
+**You can create from the start a Deployment with multiple instances using the --replicas parameter for the kubectl run command**
+
+**Scaling is accomplished by changing the number of replicas in a Deployment.**
+
+```shell
+kubectl get deployments
+kubectl scale deployments/kubernetes-bootcamp --replicas=4
+kubectl get deployments
+kubectl get pods -o wide
+kubectl describe deployments/kubernetes-bootcamp
+kubectl describe services/kubernetes-bootcamp
+export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')
+echo NODE_PORT=$NODE_PORT
+curl $(minikube ip):$NODE_PORT
+curl $(minikube ip):$NODE_PORT
+curl $(minikube ip):$NODE_PORT
+curl $(minikube ip):$NODE_PORT
+
+kubectl scale deployments/kubernetes-bootcamp --replicas=2
+kubectl get deployments
+kubectl get pods -o wide
+
+```
+
+6.**滚动更新**
+
+**Rolling updates allow Deployments' update to take place with zero downtime by incrementally updating Pods instances with new ones.**
+
+![img](https://d33wubrfki0l68.cloudfront.net/30f75140a581110443397192d70a4cdb37df7bfc/fa906/docs/tutorials/kubernetes-basics/public/images/module_06_rollingupdates1.svg)
+
+![img](https://d33wubrfki0l68.cloudfront.net/678bcc3281bfcc588e87c73ffdc73c7a8380aca9/703a2/docs/tutorials/kubernetes-basics/public/images/module_06_rollingupdates2.svg)
+
+![img](https://d33wubrfki0l68.cloudfront.net/9b57c000ea41aca21842da9e1d596cf22f1b9561/91786/docs/tutorials/kubernetes-basics/public/images/module_06_rollingupdates3.svg)
+
+![img](https://d33wubrfki0l68.cloudfront.net/6d8bc1ebb4dc67051242bc828d3ae849dbeedb93/fbfa8/docs/tutorials/kubernetes-basics/public/images/module_06_rollingupdates4.svg)
+
+
+
+**If a Deployment is exposed publicly, the Service will load-balance the traffic only to available Pods during the update.**
+
+```shell
+kubectl get deployments
+kubectl get pods
+kubectl describe pods
+kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=jocatalin/kubernetes-bootcamp:v2
+kubectl get pods
+kubectl describe services/kubernetes-bootcamp
+export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')
+echo NODE_PORT=$NODE_PORT
+curl $(minikube ip):$NODE_PORT
+kubectl rollout status deployments/kubernetes-bootcamp
+kubectl describe pods
+kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=gcr.io/google-samples/kubernetes-bootcamp:v10
+kubectl get deployments
+kubectl get pods
+kubectl describe pods
+kubectl rollout undo deployments/kubernetes-bootcamp
+kubectl get pods
+kubectl describe pods
+
+```
+
+
+
 ## 搭建Cluster
 
 1. **搭建之前，先下载谷歌镜像，参考谷歌镜像构建一节。确保每个节点都有镜像**
