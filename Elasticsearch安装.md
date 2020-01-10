@@ -1,6 +1,6 @@
 # 1 ES安装
 
-## **（ES7.5需要JDK版本8以上，且配置JAVA_HOME环境变量）**
+**注：（ES7.5需要JDK版本8以上，且配置JAVA_HOME环境变量）**
 
 ## Windows安装
 

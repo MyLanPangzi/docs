@@ -1019,9 +1019,60 @@ Pods名以及namespace作为环境变量传递至容器。
 
 容器内可通过dns访问外部服务，如果DNS插件启用。
 
-#### 容器运行类别
+#### Runtime Class
+
+**Runtime class**
+
+RuntimeClass用于选择容器运行时，是一种配置。
+
+**动机**
+
+不同的Pods可以运行不同的RuntimeClass以提供性能以及安全的平衡。
+
+不同的Pods可以运行相同的RuntimeClass但可以有不同的配置。
+
+**会有额外的硬件开销。但保证了安全性隔离**
+
+**设置**
+
+1. 在节点上配置CRI实现。
+
+2. 创建相应的RuntimeClass资源。
+
+   ```yml
+   apiVersion: node.k8s.io/v1beta1  # RuntimeClass is defined in the node.k8s.io API group
+   kind: RuntimeClass
+   metadata:
+     name: myclass  # The name the RuntimeClass will be referenced by
+     # RuntimeClass is a non-namespaced resource
+   handler: myconfiguration  # The name of the corresponding CRI configuration
+   ---
+   apiVersion: v1
+   kind: Pod
+   metadata:
+     name: mypod
+   spec:
+     runtimeClassName: myclass
+     # ...
+   ```
+
+   
 
 #### 容器生命周期钩子
+
+尽可能的保持钩子轻量级。钩子函数可能会调用多次，确保可重复执行。
+
+用于预设置资源，以及清除资源。比如密钥，token等。
+
+容器初始化前后有2个钩子函数：
+
+1. PostStart：无参，在容器创建后执行，同步阻塞，无法达到Running状态，超时会杀死容器。
+2. PreStop：无参，在容器销毁前执行，同步阻塞，无法到达Complete状态，超过宽限期会强制杀死容器。
+
+钩子实现：
+
+1. Exec：执行指定的命令，资源消耗统计在容器中。
+2. HTTP：执行HTTP请求。
 
 ## 负载
 
