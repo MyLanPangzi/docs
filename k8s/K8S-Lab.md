@@ -452,27 +452,44 @@
 
 **其实服务的默认DNS为：服务名.default.svc.cluster.local。**
 
-## 拉取私有镜像
+## 探索容器生命周期
 
 ### Goal
 
-配置Node从私有仓库中拉取镜像。
+掌握容器生命周期的执行顺序，以及定义。
 
 ### Steps
 
-1. 搭建Private Registry
-2. 配置Node
-3. 编写Deployment
-4. 部署
+1. 使用初始化容器，初始化一个卷，在卷中放置一个hello文件，并追加init。
 
-### Summary
+2. 容器启动后执行命令，echo app >> /data/hello && sleep 100;
 
-## 在容器中使用环境变量
+3. 使用postStart钩子，追加postStart。
 
-### Goal
+4. ~~使用startupProbe，追加startupProbe，周期为2S，失败阈值为10。目前还不知道如何启用alpha特性。。此步骤先省略~~
 
-在容器中使用自定义环境变量，集群信息环境变量，服务环境变量。
+5. 使用readinessProbe，1秒后追加readinessProbe，周期为100S。
 
-### Steps
+6. 使用livenessProbe，3秒后追加livenessProbe，周期为100S。
+
+7. 将卷挂载至容器的/data目录。
+
+8. 使用preStop钩子，追加preStop，并sleep 10S。
+
+9. 使用kubectl delete删除Pod。
+
+10. 在容器删除之前，开启一个新的终端，使用kubectl cp命令将文件拷贝至~目录，验证文件内容是否与下面输出一致。
+
+    ```shell
+    init
+    app
+    postStart
+    readinessProbe
+    livenessProbe 
+    preStop
+    ```
 
 ### Suammary
+
+init -> app -> post -> **startup** -> readiness | liveness -> pre
+
