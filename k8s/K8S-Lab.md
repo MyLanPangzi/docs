@@ -493,3 +493,5 @@
 
 init -> app -> post -> **startup** -> readiness | liveness -> pre
 
+探针的首次启动时间为**初始延迟时间+周期时间**
+

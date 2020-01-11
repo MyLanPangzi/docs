@@ -1078,6 +1078,199 @@ RuntimeClass用于选择容器运行时，是一种配置。
 
 ### Pods
 
+#### 大纲
+
+##### 理解Pods
+
+K8S中，一个Pod是最基础的执行单元，最小最简单的可部署单元。
+
+Pod即是集群中的进程。封装了应用的容器，存储，网络，以及运行选项，也是部署单元，应用程序实例。Pod由一个或多个紧耦合的容器组成，容器间共享资源。
+
+Pods的2种表现方式:
+
+-  **单容器Pod**
+- **多容器Pod**.封了多个紧耦合需共享资源的容器。![example pod diagram](https://d33wubrfki0l68.cloudfront.net/aecab1f649bc640ebef1f05581bfcc91a48038c4/728d6/images/docs/pod.svg)
+- 参考：
+  - [The Distributed System Toolkit: Patterns for Composite Containers](https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns)
+  - [Container Design Patterns](https://kubernetes.io/blog/2016/06/container-design-patterns)
+
+每个Pod对应一个应用实例，如需伸缩，可部署多个Pod。通常使用Controller进行伸缩。
+
+**Pods如何管理多个容器**：
+
+Pods被设计为协作多个进程组成一个紧密合作的服务单元。Pod中的容器自动的放置在一起并在调度在同一物理机或虚拟机上。这些容器共享资源以及依赖，可以与其他容器通讯以及协调他们何时以及如何终止。
+
+只有紧耦合共享资源的Pods才考虑放置在同一个Pod中，例如上图。
+
+某些Pods有初始容器以及应用容器，初始容器在应用容器启动之前运行并且完全成功退出。
+
+Pods提供了2种共享的资源，网络以及存储。
+
+**网络**
+
+每个Pod拥有一个唯一的IP，Pod中的每个容器共享同一网络命名空间包括IP地址以及端口。同一Pod内的容器通讯通过localhost。Pod之间的通讯通过CNI插件进行协调，例如calico，flannel。
+
+**存储**
+
+一个Pod能指定一组共享的卷。Pod中的容器通过卷共享数据。卷能持久化数据，在容器重启后依然可以访问。
+
+##### 使用Pods
+
+极少手动创建单独的Pod，因为Pod被设计为一次性实体，用完即删。一旦创建就会被分配至一个节点，直至进程终止，pod对象删除，Pod被驱逐，节点失败。
+
+> **Note:** 不要混淆重启容器与重启Pod。Pod不能运行，只是容器运行的环境。Pod的重启将被分配到其他节点，Pod内容器共享的卷将会被删除。
+
+Pod不能自愈。如果调度到一个失败的节点或调度失败，则Pod会被删除。Pod不能在驱逐中以及节点维护时存活。K8S使用了高层抽象（控制器）来处理Pod的自愈以及伸缩。
+
+**控制器能创建以及管理多个Pod，拥有复制，滚动更新，自愈等能力。**
+
+常见控制器:
+
+- [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
+- [StatefulSet](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
+- [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)
+
+控制器使用模板来创建Pod。
+
+##### Pods模板
+
+Pod模板是规范，包括在其他对象中，例如RC，JOB，DS。控制器使用模板来构建真实的Pod。模板如下
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox
+    command: ['sh', '-c', 'echo Hello Kubernetes! && sleep 3600']
+```
+
+Pod模板不描述期望状态，不影响已创建的Pod，能方便的更新。
+
+Pod拥有状态，指定了所有容器的期望状态。
+
+#### Pods
+
+ Pod是最小可部署的计算单元，能被K8S创建以及管理。
+
+##### 是什么
+
+Pod是一组容器，他们共享存储，网络，规范，他们放置在同一位置，同时调度，共享同一上下文。
+
+Pod构建了一个逻辑主机，这个逻辑主机放置了一组紧耦合的容器。
+
+Pod的共享上下文是一Linux命名空间，cgroups，可能是与Docker容器类似的隔离。
+
+在Pod的上下文中，应用可能有更多的子隔离。
+
+Pod中的容器共享同一IP以及端口范围，通过localhost找到对方。Pod间可以通过IPC（中间进程通讯）通讯。不同Pod之间的容器有不同的IP，不能直接通过IPC通讯，需通过CNI插件。
+
+Pod中的容器共享卷。
+
+Pod被认为是相对临时的实体。一旦创建（赋予一个UID）会被调度到节点上，直至终止或删除。如果节点死亡，Pod被调度为删除，超时后，会创建新的Pod调度到新的节点（不同的UID）。
+
+与Pod同生共死的东西，将会在Pod删除时被删除。重新分配的Pod不会再拥有相同的内容。
+
+##### 动机
+
+Management
+
+Pod是一个模型，协调多进程组合成一个紧密的服务单元。Pod简化了应用的部署以及管理。Pod是部署，水平伸缩，复制的单元。Pod中容器的调度，命运（同生共死），协调复制，资源共享，以及依赖管理是自动处理的。
+
+Pod内的应用共享IP以及端口（注意端口的分配），通过localhost与彼此通讯。在共享的扁平网络空间中，每个Pod拥有一个IP，可以跨网络进行通讯。Pod名即是容器主机名。除了共享网络，Pod中的应用还共享卷。
+
+##### 用例
+
+Pod可以用于托管垂直集成的应用程序栈，但主要动机是支持协同放置，协同管理的帮助程序。:
+
+-  内容管理系统，文件，数据加载器，本地缓存管理器。
+- 日志，检查点备份，压缩，自旋，快照等。
+- 数据监听器，日志收集器，日志以及监控适配器，事件发布器等。
+- 代理，桥接，适配器。
+- 控制器，管理器，配置器，更新器等。
+
+单独个Pod不打算用于运行多个相同的应用程序实例。
+
+For a longer explanation, see [The Distributed System ToolKit: Patterns for Composite Containers](https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns).
+
+##### 替换考虑
+
+为什么不要在单个容器中运行多个应用？：
+
+1. 透明性。使得底层基础设施可以为容器提供服务，为用户提供便利。
+
+2. 解耦软件依赖。单容器可以独立的被版本化，重建以及重部署。
+
+3. 易于管理
+
+4. 高效。基础设施承担了大量的工作，容器可以变得轻量级。
+
+*Why not support affinity-based co-scheduling of containers?*
+
+That approach would provide co-location, but would not provide most of the benefits of Pods, such as resource sharing, IPC, guaranteed fate sharing, and simplified management.
+
+##### 持久性
+
+Pods不打算用作持久化实体，不会再调度失败，节点失败，驱逐或节点维护中幸存。
+
+用户不应当直接创建Pods。应使用高层抽象（控制器）来创建Pod。控制器提供了集群范围的自愈，复制，滚动更新。
+
+Pod 被暴露为原语，以便于:
+
+- 调度器以及控制器的可插拔性。
+- 支持Pod级别的操作，无需控制器API代理。
+- 从控制器的生命期中解耦。
+- 解耦控制器以及服务。终端控制器只需观察Pods。
+- kubelet级别功能与集群级别功能的清晰组合。kubelet是高效的pod控制器。
+- HA应用希望Pod终止时以及删除时提前替换。
+
+##### 终止
+
+优雅的终止Pod是非常重要的（给进程一个clean up的机会）。当客户发起删除请求时，系统会记录预期的宽限期在删除之前，过期后会强制删除。如果kubelet重启，会重新尝试等待宽限期然后再kill。
+
+案例:
+
+1. 用户发送删除命令，默认等待30秒宽限期。
+2. API server更新Pod，超出宽限期认为Pod死亡。
+3. Pod变成Terminating状态，当查询的时候。
+4. 于此同时（步骤3）kubelet看到pod标记为终止状态，pod更新时间已在步骤2设置，开始终止进程。
+   1. 如果pods内的容器定义了preStop钩子，则调用钩子。如果钩子执行超过了宽限期，则等待扩展宽限期。
+   2. 容器接受到TERM信号，并不是所有容器都在同一时间接受到终止信号，如果停止顺序很重要，则每个容器都需要一个preStop钩子。
+5. 于此同时（步骤3）Pod从endpoints移除，不在参与负载均衡，不再是RC控制的一部分。
+6. 当宽限期过后，Pod中的所有进程都会被强制KILL。
+7. kubelet完成Pod的删除，在API server上设置宽限期为0（立即删除）。客户端不能再看见此Pod。
+
+默认的，所有的删除都有30S宽限期。kubectl delete 命令支持--grace-period选项来改变宽限期。当值设置为0时，强制删除Pod。必须要指定--force与--grace-period=0才能完成强制删除。
+
+**强制删除Pod**
+
+强制删除定义为，Pod立即从集群和etcd中删除。当pod强制删除时，API server不会等待宽限期。它会立即从API中移除。节点上，立即终止的pod仍然有一小段宽限期。
+
+强制删除pod可能存在危险，应当心。特别是在状态集中的pods。
+
+##### 权限模型
+
+pod中的任意容器都能启用权限模型。容器内的进程能访问外部的网络栈和设备。容器内的进程能获得与外部进程一样的权限。所有网络以及卷插件能从kubelet中分离。容器运行时必须支持相关的设置。
+
+##### API对象
+
+#### 生命周期
+
+#### 初始化容器
+
+#### 预设置
+
+#### 拓扑
+
+#### Disruptions
+
+#### 瞬时容器
+
 ### Controller
 
 ## 服务，负载均衡，网络
