@@ -733,7 +733,7 @@ CCM基于插件机制进行设计，运行新的云提供商以插件的方式�
 
 未使用CCM的架构
 
-![](images\pre-ccm-arch.png)
+![](../images\pre-ccm-arch.png)
 
 #### 设计
 
@@ -747,7 +747,7 @@ CCM基于插件机制进行设计，运行新的云提供商以插件的方式�
 
 使用CCM的架构：
 
-![](images\post-ccm-arch.png)
+![](../images\post-ccm-arch.png)
 
 #### CCM组件
 
@@ -1241,7 +1241,7 @@ Pod 被暴露为原语，以便于:
 4. 于此同时（步骤3）kubelet看到pod标记为终止状态，pod更新时间已在步骤2设置，开始终止进程。
    1. 如果pods内的容器定义了preStop钩子，则调用钩子。如果钩子执行超过了宽限期，则等待扩展宽限期。
    2. 容器接受到TERM信号，并不是所有容器都在同一时间接受到终止信号，如果停止顺序很重要，则每个容器都需要一个preStop钩子。
-5. 于此同时（步骤3）Pod从endpoints移除，不在参与负载均衡，不再是RC控制的一部分。
+5.    于此同时（步骤3）Pod从endpoints移除，不在参与负载均衡，不再是RC控制的一部分。
 6. 当宽限期过后，Pod中的所有进程都会被强制KILL。
 7. kubelet完成Pod的删除，在API server上设置宽限期为0（立即删除）。客户端不能再看见此Pod。
 
@@ -1260,6 +1260,235 @@ pod中的任意容器都能启用权限模型。容器内的进程能访问外�
 ##### API对象
 
 #### 生命周期
+
+- [Pod phase](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase)
+- [Pod conditions](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-conditions)
+- [Container probes](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes)
+- [Pod and Container status](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-and-container-status)
+- [Container States](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-states)
+- [Pod readiness gate](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-readiness-gate)
+- [Restart policy](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy)
+- [Pod lifetime](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-lifetime)
+- [Examples](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#examples)
+
+##### 阶段
+
+Pods的status字段是PodStatus对象，拥有phase字段。
+
+phase字段描述了Pod在生命周期的哪个阶段。phase既不是容器或Pod状态的汇总，也不是状态机。
+
+phase字段只允许出现下面的值：
+
+| Value       | Description                                                  |
+| :---------- | :----------------------------------------------------------- |
+| `Pending`   | Pod已被接受，但容器还没创建。可能还在调度或者拉取镜像。      |
+| `Running`   | 已绑定到节点，所有容器已创建。至少还有一个容器在运行或者进程正在启动或重启。 |
+| `Succeeded` | 所有容器成功终止且不被重启。                                 |
+| `Failed`    | 所有容器已被终止，至少有一个容器终止失败。即非0退出状态或被系统终止。 |
+| `Unknown`   | 出于某些原因Pod状态不能被获取，典型的由于网络问题不能与Pod主机通讯。 |
+
+##### Pod Conditions
+
+Pod的PodStatus中有一个PodConditions数组，通过Pod传递（也许没有）。PodCondition中的每一个元素有六个可能字段:
+
+- lastProbeTime最后一次探针时间。
+
+- lastTransitionTime最后一次转换时间，由一个状态转换为另一个状态。
+
+- message转换详情，人类可读。
+
+- reason，唯一，一个单词，驼峰命名，条件的最后一次转换原因。
+
+- status字段，可能是True，False，Unknown。
+
+- type字段：
+
+  - PodScheduled：Pod已被调度到一个节点。
+  - Ready：有能力服务请求，应当被添加到负载均衡中。
+  - Initialized：所有容器启动成功。
+  - Unschedulable：调度器现在不能调度此Pod，例如资源泄漏或其他问题。
+  - ContainerReady：所有容器就绪。
+
+```
+Conditions:
+  Type              Status
+  Initialized       True 
+  Ready             True 
+  ContainersReady   True 
+  PodScheduled      True 
+
+```
+
+
+
+##### 探针
+
+探针是对容器周期性的诊断通过kubelet完成。有三种类型的探针实现:
+
+- ExecAction：在容器内执行特定的命令。0退出即成功。
+- TCPSocketAction：检查容器的的端口是否打开。
+- HTTPGetAction：完成一个HTTP请求。返回码在200-400即成功。
+
+探针结果:
+
+- Success：容器通过诊断。
+- Failure：容器未通过诊断。
+- Unknown：诊断失败，无动作采取。
+
+探针类型:
+
+- livenessProbe：指示容器是否在运行。如果探测失败，kubelet会杀死容器，然后服从restartPolic策略。如果为提供活性探针，则默认为Sucess。
+- readinessProbe：指示容器是否能服务请求。如未就绪，EndpointController会移除Pod的IP不参与LB。初始延迟之前默认状态是Failure。如未提供则默认Sucess。
+- startupProbe：指示容器是否启动。所有其他探针都在此探针之后（这是个alpha特性），直到此探针成功。如果失败，kubelet杀死容器，然后服从restartPolicy。如未提供默认Sucess。
+
+**何时使用活性探针。**
+
+**FEATURE STATE:** `Kubernetes v1.0` [stable](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#)
+
+在探针失败时，自定义容器kill或重启逻辑。
+
+检测死锁。
+
+**何时使用就绪探针：**
+
+**FEATURE STATE:** `Kubernetes v1.0` [stable](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#)
+
+启动时需加载大量数据，配置文件，迁移数据，下线维护。
+
+**何时使用启动探针：**
+
+启动时间大于活性探针的失败时间：初始延迟+失败阈值*周期
+
+**容器状态：**
+
+一旦Pod分配至节点，kubelet开始创建容器。容器状态：Waiting，Running，Terminated。
+
+查看命令：kubectl describe pod podname。
+
+`Waiting`: 默认状态。正在拉取镜像或使用密钥等其他操作。
+
+- ```yaml
+  ...
+    State:          Waiting
+     Reason:       ErrImagePull
+    ...
+  ```
+
+- `Running`: 进入此状态时，postStart钩子已被执行。
+
+  ```yaml
+  ...
+    State:          Running
+     Started:      Wed, 30 Jan 2019 16:46:38 +0530
+  ...
+  ```
+
+- `Terminated`: 进入此状态时,preStop钩子已执行完。正常或异常终止。
+
+  ```yaml
+  ...
+    State:          Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Wed, 30 Jan 2019 11:45:26 +0530
+      Finished:     Wed, 30 Jan 2019 11:45:26 +0530
+  ...
+  ```
+
+**重启策略：**
+
+restartPolicy：Always，OnFailure，Never。
+
+**生存期：**
+
+Pod会一直存活至控制器或管理员手动删除它。
+
+三种可用的控制器:
+
+- Job的重启策略只适合OnFailre以及Never
+- RC，RS，Deployment的重启策略只适合Always。
+- DS的Pod运行在每一台机器上。
+
+这三种类型的控制使用PodTemplate来创建Pod。使用合适的控制器来创建合适的Pod。
+
+如果节点失去连接，则此节点的Pod都会设置为Failed。
+
+**案例：**
+
+Advanced liveness probe example
+
+Liveness probes are executed by the kubelet, so all requests are made in the kubelet network namespace.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: liveness
+  name: liveness-http
+spec:
+  containers:
+  - args:
+    - /server
+    image: k8s.gcr.io/liveness
+    livenessProbe:
+      httpGet:
+        # when "host" is not defined, "PodIP" will be used
+        # host: my-host
+        # when "scheme" is not defined, "HTTP" scheme will be used. Only "HTTP" and "HTTPS" are allowed
+        # scheme: HTTPS
+        path: /healthz
+        port: 8080
+        httpHeaders:
+        - name: X-Custom-Header
+          value: Awesome
+      initialDelaySeconds: 15
+      timeoutSeconds: 1
+    name: liveness
+```
+
+##### Example states
+
+- Pod is running and has one Container. Container exits with success.
+  - Log completion event.
+  - If restartPolicy is:
+    - Always: Restart Container; Pod `phase` stays Running.
+    - OnFailure: Pod `phase` becomes Succeeded.
+    - Never: Pod `phase` becomes Succeeded.
+- Pod is running and has one Container. Container exits with failure.
+  - Log failure event.
+  - If restartPolicy is:
+    - Always: Restart Container; Pod `phase` stays Running.
+    - OnFailure: Restart Container; Pod `phase` stays Running.
+    - Never: Pod `phase` becomes Failed.
+- Pod is running and has two Containers. Container 1 exits with failure.
+  - Log failure event.
+  - If restartPolicy is:
+    - Always: Restart Container; Pod `phase` stays Running.
+    - OnFailure: Restart Container; Pod `phase` stays Running.
+    - Never: Do not restart Container; Pod `phase` stays Running.
+  - If Container 1 is not running, and Container 2 exits:
+    - Log failure event.
+    - If restartPolicy  is:
+      - Always: Restart Container; Pod `phase` stays Running.
+      - OnFailure: Restart Container; Pod `phase` stays Running.
+      - Never: Pod `phase` becomes Failed.
+- Pod is running and has one Container. Container runs out of memory.
+  - Container terminates in failure.
+  - Log OOM event.
+  - If restartPolicy is:
+    - Always: Restart Container; Pod `phase` stays Running.
+    - OnFailure: Restart Container; Pod `phase` stays Running.
+    - Never: Log failure event; Pod `phase` becomes Failed.
+- Pod is running, and a disk dies.
+  - Kill all Containers.
+  - Log appropriate event.
+  - Pod `phase` becomes Failed.
+  - If running under a controller, Pod is recreated elsewhere.
+- Pod is running, and its node is segmented out.
+  - Node controller waits for timeout.
+  - Node controller sets Pod `phase` to Failed.
+  - If running under a controller, Pod is recreated elsewhere.
 
 #### 初始化容器
 
