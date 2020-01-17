@@ -127,3 +127,28 @@ df -h
 vgdisplay
 ```
 
+## 安装NFS服务
+
+```shell
+#先关闭防火墙
+apt-get update && apt install nfs-kernel-server
+mkdir -p /mnt/sharedfolder
+chown nobody:nogroup /mnt/sharedfolder
+chmod 777 /mnt/sharedfolder
+vim /etc/exports
+#/mnt/sharedfolder 192.168.2.0/24(rw,sync,no_subtree_check)
+exportfs -a
+systemctl restart nfs-kernel-server
+#ufw allow from [clientIP or clientSubnetIP] to any port nfs
+#ufw allow from 192.168.100/24 to any port nfs
+ufw status
+```
+
+## 安装NFS客户端
+
+```shell
+apt-get update && apt-get install nfs-common
+mkdir -p /mnt/sharedfolder_client
+mount serverIP:/mnt/sharedfolder /mnt/sharedfolder_client
+```
+
