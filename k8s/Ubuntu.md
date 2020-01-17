@@ -131,7 +131,7 @@ vgdisplay
 
 ```shell
 #先关闭防火墙
-apt-get update && apt install nfs-kernel-server
+apt-get update && apt install nfs-kernel-server -y
 mkdir -p /mnt/sharedfolder
 chown nobody:nogroup /mnt/sharedfolder
 chmod 777 /mnt/sharedfolder
@@ -147,8 +147,9 @@ ufw status
 ## 安装NFS客户端
 
 ```shell
-apt-get update && apt-get install nfs-common
+apt-get update && apt-get install nfs-common -y
 mkdir -p /mnt/sharedfolder_client
-mount serverIP:/mnt/sharedfolder /mnt/sharedfolder_client
+mount 192.168.2.40:/mnt/sharedfolder /mnt/sharedfolder_client
+
 ```
 
