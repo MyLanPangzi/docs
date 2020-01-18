@@ -495,3 +495,204 @@ init -> app -> post -> **startup** -> readiness | liveness -> pre
 
 探针的首次启动时间为**初始延迟时间+周期时间**
 
+## 部署StatefulSet应用
+
+### Goal   
+
+1. 掌握PV，PVC的使用。
+2. 掌握无头服务的使用。
+3. 掌握状态集应用的部署。
+4. 观察状态集应用的启停顺序。
+5. 使用curl观察，Pod的DNS。
+6. 回收PV。
+
+### Steps
+
+1. 安装NFS
+
+   ```shell
+   apt-get update && apt install nfs-kernel-server -y
+   mkdir -p /mnt/nfs{1..3}
+   chown nobody:nogroup /mnt/nfs{1..3}
+   chmod 777 /mnt/nfs{1..3}
+   vim /etc/exports
+   #/mnt/nfs1 192.168.2.0/24(rw,sync,no_subtree_check)
+   #/mnt/nfs2 192.168.2.0/24(rw,sync,no_subtree_check)
+   #/mnt/nfs3 192.168.2.0/24(rw,sync,no_subtree_check)
+   exportfs -a
+   systemctl restart nfs-kernel-server
+   #ufw allow from [clientIP or clientSubnetIP] to any port nfs
+   #ufw allow from 192.168.100/24 to any port nfs
+   ufw status
+   tee /mnt/nfs1/index.html <<-EOF 
+   nfs1
+   EOF
+   tee /mnt/nfs2/index.html <<-EOF 
+   nfs2
+   EOF
+   tee /mnt/nfs3/index.html <<-EOF 
+   nfs3
+   EOF
+   
+   ```
+
+2. 编写PV
+
+   ```yml
+   apiVersion: v1
+   kind: PersistentVolume
+   metadata:
+     name: nfs1
+   spec:
+     capacity:
+       storage: 5Gi
+     volumeMode: Filesystem
+     accessModes:
+       - ReadWriteOnce
+     persistentVolumeReclaimPolicy: Retain
+     storageClassName: nfs
+     nfs:
+       path: /mnt/nfs1
+       server: 192.168.2.40
+   ---
+   apiVersion: v1
+   kind: PersistentVolume
+   metadata:
+     name: nfs2
+   spec:
+     capacity:
+       storage: 5Gi
+     volumeMode: Filesystem
+     accessModes:
+       - ReadWriteOnce
+     persistentVolumeReclaimPolicy: Retain
+     storageClassName: nfs
+     nfs:
+       path: /mnt/nfs2
+       server: 192.168.2.40
+   ---
+   apiVersion: v1
+   kind: PersistentVolume
+   metadata:
+     name: nfs3
+   spec:
+     capacity:
+       storage: 5Gi
+     volumeMode: Filesystem
+     accessModes:
+       - ReadWriteOnce
+     persistentVolumeReclaimPolicy: Retain
+     storageClassName: nfs
+     nfs:
+       path: /mnt/nfs3
+       server: 192.168.2.40
+   
+   ```
+
+3. 编写无头服务
+
+   ```yml 
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: web
+   spec:
+     clusterIP: 'None'
+     selector:
+       app: nginx
+   ```
+
+4. 编写状态集
+
+   ```yml
+   apiVersion: apps/v1
+   kind: StatefulSet
+   metadata:
+     name: web
+   spec:
+     replicas: 3
+     selector:
+       matchLabels:
+         app: nginx
+     serviceName: 'web'
+     volumeClaimTemplates:
+       - metadata:
+           name: nfs
+         spec:
+           resources:
+             requests:
+               storage: '3Gi'
+           storageClassName: 'nfs'
+           accessModes: ['ReadWriteOnce']
+     template:
+       metadata:
+         labels:
+           app: nginx
+       spec:
+         containers:
+           - name: nginx
+             image: nginx
+             ports:
+               - containerPort: 80
+             volumeMounts:
+               - mountPath: /usr/share/nginx/html
+                 name: nfs
+   ```
+
+5. 观察启停顺序
+
+   ```shell
+   kubectl delete sts web
+   kubectl apply -f -<<EOF   #拷贝上面的状态集
+   ```
+
+6. 新起一个Pod观察DNS
+
+   ```shell
+   kubectl get ep #观察无头服务的Endpoint
+   kubectl apply -f -<<EOF
+   apiVersion: v1
+   kind: Pod
+   metadata:
+     name: nginx
+   spec:
+     containers:
+       - name: nginx
+         image: nginx
+   EOF
+   kubectl exec -it nginx -- bash
+   apt-get update && apt-get install -y curl
+   curl web && curl web-0.web && curl web-1.web && curl web-2.web
+   curl web && curl web-0.web && curl web-1.web && curl web-2.web
+   curl web && curl web-0.web && curl web-1.web && curl web-2.web
+   ```
+
+7. 回收PV
+
+   ```shell
+   kubectl delete sts web --forece --grace-period 0
+   kubectl get pvc
+   kubectl delete pvc --all 
+   kubectl get pv
+   kubectl edit pv nfs1 #删除引用块，下面状态会变成可用
+   kubectl get pv
+   NAME   CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM               STORAGECLASS   REASON   AGE
+   nfs1   5Gi        RWO            Retain           Released   default/nfs-web-0   nfs                     110m
+   nfs2   5Gi        RWO            Retain           Released   default/nfs-web-1   nfs                     110m
+   nfs3   5Gi        RWO            Retain           Released   default/nfs-web-2   nfs                     110m
+   
+   ```
+
+   
+
+### Summary
+
+PV独立于Pod的生命周期，Pod死亡后，PV的内容不会丢失。
+
+Volume独立于容器的生命周期，容器死亡后，只要Pod还在，Volume的内容不会丢失。
+
+状态集应用的DNS，分配为podName.serviceName.svc.default.cluster.local。
+
+Pod的启动是顺序启动，从0开始，上一个Pod必须是Ready或Running时，下一个Pod才会启动。
+
+Pod的停止是倒序停止，从最后一个开始。
