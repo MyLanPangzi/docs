@@ -303,7 +303,7 @@ scheduler: {}
 
 ```shell
 kubeadm cofig print ini-defaults >> kubeadm.yml
-kubeadm init --config kubeadm.yml --upload-certs | tee kubeadm-init.log
+kubeadm init --config kubeadm.yml --upload-certs | tee init.log
 
 #一定要在每个节点都有admin.conf 
 mkdir -p $HOME/.kube
@@ -327,6 +327,15 @@ kubectl apply -f https://docs.projectcalico.org/v3.11/manifests/calico.yaml
   " >> $HOME/.bash_profile
   source $HOME/.bash_profile
 
+```
+
+## 配置iptables转发链启用
+
+```
+vi /etc/sysctl.conf
+net.ipv4.ip_forward=1
+reboot
+#sysctl -w net.ipv4.ip_forward=1
 ```
 
 
