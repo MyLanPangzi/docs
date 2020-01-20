@@ -142,6 +142,7 @@ systemctl restart nfs-kernel-server
 #ufw allow from [clientIP or clientSubnetIP] to any port nfs
 #ufw allow from 192.168.100/24 to any port nfs
 ufw status
+apt-get update && apt-get install -y nfs-common nfs-utils
 ```
 
 ## 安装NFS客户端

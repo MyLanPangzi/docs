@@ -350,7 +350,13 @@ reboot
 }
 ```
 
+## 配置动态PV
 
+```sh
+#安装helm 安装nfs nfs-utils nfs-common
+helm install  --set nfs.server=192.168.2.40 --set nfs.path=/mnt/sharedfolder nfs-provisioner stable/nfs-client-provisioner
+#注意镜像拉取，设置加速，或者tag方式
+```
 
 
 
