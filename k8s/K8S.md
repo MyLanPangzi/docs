@@ -1,24 +1,11 @@
 # Kubernetes
 
-## 谷歌镜像构建
+## 谷歌镜像加速
 
-1. 构建github仓库，编写dockerfile
-2. 构建阿里云镜像仓库，选择海外机器构建
-3. 拉取镜像到本地 ，tag方式 重命名为谷歌镜像
-
-参考链接:https://www.jianshu.com/p/21cd9aeee12b
-
-```dockerfile
-FROM k8s.gcr.io/kube-apiserver:v1.17.0
-LABEL maintainer="hiscat <1251723871@qq.com>" 
-```
-
-```shell
-docker pull registry.cn-hangzhou.aliyuncs.com/twocat/kube-apiserver:1.17.0
-docker tag registry.cn-hangzhou.aliyuncs.com/twocat/kube-apiserver:1.17.0 k8s.gcr.io/kube-apiserver:v1.17.0
-```
-
-
+1. docker.io加速，替换为dockerhub.azk8s.cn。
+2. gcr.io加速，替换为 gcr.azk8s.cn/google_containers。
+3. k8s.grc.io加速，替换为gcr.azk8s.cn/google-containers。
+4. quay.io加速，替换为quay.azk8s.cn。
 
 ## Minikube
 

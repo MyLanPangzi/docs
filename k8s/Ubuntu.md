@@ -136,7 +136,8 @@ mkdir -p /mnt/sharedfolder
 chown nobody:nogroup /mnt/sharedfolder
 chmod 777 /mnt/sharedfolder
 vim /etc/exports
-#/mnt/sharedfolder 192.168.2.0/24(rw,sync,no_subtree_check)
+#一定要加最后那个参数。。不然会有权限问题
+#/mnt/sharedfolder 192.168.2.0/24(rw,sync,no_subtree_check,no_root_squash)
 exportfs -a
 systemctl restart nfs-kernel-server
 #ufw allow from [clientIP or clientSubnetIP] to any port nfs
