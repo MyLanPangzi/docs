@@ -749,3 +749,53 @@ commit;
 
 ![image-20191201114005030](.\images\lock-suggest.png)
 
+
+
+# 主从复制
+
+## Master配置
+
+```shell
+echo -e 'server-id=1    #server实例的id  \n
+log-bin=/var/lib/mysql/mysql-bin   #log-bin文件存储位置 \n
+binlog_format=ROW  # 设置log-bin格式 STATEMENT   ROW  MIXED   \n
+
+#可选的配置 \n
+binlog-ignore-db=mysql  # 设置不要复制的数据库 \n
+#binlog-do-db=xxx  # 设置需要复制的主数据库名字\n'  >> /etc/my.cnf.d/mysql-server.cnf
+
+systemctl restart mysqld && sleep 20
+mysql -uroot -pXiebo0409
+CREATE USER 'slave'@'192.168.2.137' IDENTIFIED BY 'Xiebo0409';
+GRANT REPLICATION SLAVE ON *.* TO 'slave'@'192.168.2.137';
+FLUSH TABLES WITH READ LOCK;
+SHOW MASTER STATUS;#记录position
+exit
+
+mysqldump -uroot -pXiebo0409 --all-databases --master-data > dbdump.db
+scp -P 2222 ./dbdump.db root@192.168.2.137:/root/
+
+```
+
+
+
+## Slave配置
+
+```shell
+echo -e '
+server-id=2    #server实例的id \n
+relay-log=mysql-relay   #中继日志 \n
+'  >> /etc/my.cnf.d/mysql-server.cnf
+
+systemctl restart mysqld && sleep 20
+mysql -uroot -pXiebo0409 < fulldb.dump
+mysql -uroot -pXiebo0409
+CHANGE MASTER TO MASTER_HOST='192.168.2.137',MASTER_USER='slave',MASTER_PASSWORD='Xiebo0409',MASTER_LOG_FILE='mysql-bin.000001',MASTER_LOG_POS=155;#修改MASTER_LOG_POS为Master的Position
+
+START SLAVE;
+SHOW SLAVE STATUS\G
+STOP SLAVE;
+```
+
+# HA
+
