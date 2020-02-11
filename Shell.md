@@ -1,15 +1,17 @@
 [TOC]
 
-# 文本处理工具
+# Shell
 
-## Grep
+## 文本处理工具
+
+### Grep
 
 **多文件搜索**
 
 1. ![image-20191207151427657](images\grep.png)
 2. ![image-20191207151837327](images\grep-案例.png)
 
-## Cut
+### Cut
 
 **多文件剪切**
 
@@ -25,7 +27,7 @@
 6. ![image-20191207152138085](images\cut-案例.png)
 7. 课堂练习![image-20191207152233458](images\课堂练习1.png)
 
-## Sort
+### Sort
 
 **多文件排序**
 
@@ -41,7 +43,7 @@
 10. ![image-20191207152332655](images\sort.png)
 11. ![image-20191207152403207](images\sort-案例.png)
 
-## Uniq
+### Uniq
 
 **多文件去重，只去除连续重复的行**
 
@@ -54,14 +56,14 @@
 7. -s 跳过前n个字符比较
 8. ![image-20191207152453365](images\uniq.png)
 
-## Tee
+### Tee
 
 **多文件追加，从输入流打印到文件以及输出流**
 
 1. -a 追加
 2. ![image-20191207152521038](images\tee.png)
 
-## Diff
+### Diff
 
 1. ![image-20191207152554110](images\diff1.png)
 2. ![image-20191207152643831](images\diff2.png)
@@ -71,11 +73,11 @@
 6. ![image-20191207153028361](images\diff-dir.png)
 7. ![image-20191207153136443](images\diff-patch.png)
 
-## Paste
+### Paste
 
 1. ![image-20191207153212483](images\paste.png)
 
-## Tr
+### Tr
 
 1. 搜索替换
 2. 删除
@@ -85,18 +87,69 @@
 6. ![image-20191207153754499](images\课堂练习2.png)
 7. ![image-20191207153830961](images\课堂练习3.png)
 
-# Bash
+## Bash
 
-## 常见快捷键
+### 常见快捷键
 
 ![image-20191207143711329](images\shorthands.png)
 
-## 通配符
+### 通配符
 
 ![image-20191207143859088](images\通配符.png)
 
-## 引号
+### 引号
 
 ![image-20191207144848958](images\引号.png)
 
 ![image-20191207145304472](images\引号案例.png)
+
+### 文本处理语言
+
+1. sed
+
+   ```shell
+   #-e 多命令组合
+   #a 追加 
+   #d 删除
+   #s 查找替换
+   tee sed.txt <<-EOF
+   hello
+   world
+   hello
+   linux
+   EOF
+   sed '2a hello' sed.txt
+   sed '2d' sed.txt
+   sed '/hello/d' sed.txt
+   sed 's/world/linux' sed.txt
+   sed 's/world/linux/g' sed.txt
+   sed -e '2a hello' -e '3d' -e 's/linux/hello/g' sed.txt
+   ```
+
+2. awk
+
+   ```shell
+   #-F 指定分隔符field seperate
+   #-v 指定用户变量
+   #FILENAME 文件名内置变量
+   #NR 行号内置变量
+   #NF 列长内置变量
+   awk 'pattern{action}'
+   ```
+   
+
+
+### Shell内置变量
+
+1. **$0** ：代表命令行本身
+2. **$@**：代表全部参数，配合双引号使用，替代$*
+3. **$[0-9]**：位置参数，$1 $2 ${11}
+4. **$?**：上一次命令的返回值
+
+### 流程控制
+
+1. if
+2. case
+3. while
+4. until
+5. for
