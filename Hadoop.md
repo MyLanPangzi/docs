@@ -170,15 +170,167 @@
 
 ## 集群环境搭建
 
-**先准备三台机器，伪分布环境搭建完成。**
+**先准备三台机器，伪分布环境搭建完成，三个节点之间hosts文件记得修改，网络互通。**
+
+| hadoop100           | hadoop101    | hadoop102             |
+| ------------------- | ------------ | --------------------- |
+| **resourcemanager** | **namenode** | **secondarynamenode** |
+| nodemanager         | nodemanager  | nodemanager           |
+| datanode            | datanode     | datanode              |
+| historyserver       |              |                       |
 
 ### Steps
 
-1. 修改配置文件
+1. 准备分发脚本
 
-2. 启动
+   ```shell
+   #分发之前先ssh互通各台机器，注意用户
+   ssh-keygen -t rsa
+   #ssh-copy-id root@haddop100
+   ssh-copy-id haddop100
+   ssh-copy-id haddop101
+   ssh-copy-id haddop102
+   
+   tee ~/bin/xsync <<-EOF
+   #!/bin/bash
+   #1 获取输入参数个数，如果没有参数，直接退出
+   pcount=$#
+   if [ $pcount -eq 0 ]; then
+   echo no args;
+   exit;
+   fi
+   
+   #2 获取文件名称
+   p1=$1
+   fname=`basename $p1`
+   echo fname=$fname
+   
+   #3 获取上级目录到绝对路径
+   pdir=`cd -P $(dirname $p1) || exit; pwd`
+   echo pdir=$pdir
+   
+   #4 获取当前用户名称
+   user=`whoami`
+   
+   #5 循环
+   for((host=100; host<103; host++)); do
+           echo ------------------- hadoop$host --------------
+           rsync -av $pdir/$fname $user@hadoop$host:$pdir
+   done
+   EOF
+   
+   ```
 
-3. 测试
+   
+
+2. 修改配置文件
+
+   ```shell
+   tee $HADOOP_HOME/etc/hadoop/core-site.xml <<-EOF
+   <configuration>
+   <!-- 指定HDFS中NameNode的地址 -->
+       <property>
+           <name>fs.defaultFS</name>
+           <value>hdfs://hadoop101:9000</value>
+       </property>
+   
+   <!-- 指定Hadoop运行时产生文件的存储目录 -->
+       <property>
+           <name>hadoop.tmp.dir</name>
+           <value>/opt/module/hadoop-2.10.0/data/tmp</value>
+       </property>
+   </configuration>
+   EOF
+   
+   tee $HADOOP_HOME/etc/hadoop/hdfs-site.xml <<-EOF
+   <configuration>
+   	<!-- namenode 工作目录 -->
+       <property>
+           <name>dfs.namenode.name.dir</name> 					
+           <value>
+             file:///${hadoop.tmp.dir}/dfs/name1,file:///${hadoop.tmp.dir}/dfs/name2
+           </value>
+       </property>
+       <!-- 指定HDFS副本的数量 -->
+       <property>
+           <name>dfs.replication</name>
+           <value>3</value>
+       </property>
+       <!-- 指定Hadoop辅助名称节点主机配置 -->
+       <property>
+           <name>dfs.namenode.secondary.http-address</name>
+           <value>hadoop102:50090</value>
+       </property>
+   </configuration>
+   EOF
+   
+   tee $HADOOP_HOME/etc/hadoop/yarn-site.xml <<-EOF
+   <configuration>
+       <property>
+           <name>yarn.nodemanager.aux-services</name>
+           <value>mapreduce_shuffle</value>
+       </property>
+   
+   <!-- 指定YARN的ResourceManager的地址 -->
+       <property>
+           <name>yarn.resourcemanager.hostname</name>
+           <value>hadoop100</value>
+       </property>
+   </configuration>
+   EOF
+   
+   tee $HADOOP_HOME/etc/hadoop/mapred-site.xml <<-EOF
+   <configuration>
+           <!-- 历史服务器端地址 -->
+       <property>
+           <name>mapreduce.jobhistory.address</name>
+           <value>hadoop100:10020</value>
+       </property>
+       <!-- 历史服务器web端地址 -->
+       <property>
+           <name>mapreduce.jobhistory.webapp.address</name>
+           <value>hadoop100:19888</value>
+       </property>             
+       <property>
+           <name>mapreduce.framework.name</name>
+           <value>yarn</value>
+       </property>
+   </configuration>
+   EOF
+   
+   #分发配置
+   ~/bin/xsync.sh  $HADOOP_HOME/etc/hadoop/
+   ```
+
+3. 准备启动脚本，检测脚本
+
+   ```shell
+   tee ~/bin/start.sh <<-EOF
+   #!/bin/bash
+   ssh hadoop100 /opt/module/hadoop-2.10.0/sbin/mr-jobhistory-daemon.sh start historyserver
+   ssh hadoop101 /opt/module/hadoop-2.10.0/sbin/start-dfs.sh
+   ssh hadoop100 /opt/module/hadoop-2.10.0/sbin/start-yarn.sh
+   ./jps
+   EOF
+   
+   tee ~/bin/jps.sh <<-EOF
+   #!/bin/bash
+   for i in hadoop100 hadoop101 hadoop102
+   do
+     echo "--------------------$i--------------"
+     ssh $i /opt/module/jdk-13.0.2/bin/jps
+     echo "--------------------$i--------------"
+     echo -e "\n"
+   done;
+   EOF
+   #启动
+   ~/bin/start.sh
+   
+   ```
+
+   
+
+4. 测试
 
    ```shell
    #http://hadoop101:50070/
@@ -187,5 +339,4 @@
    #http://hadoop102:50090/
    
    ```
-
    
