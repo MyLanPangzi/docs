@@ -1,4 +1,4 @@
-# Ubuntu常见配置
+# ntu常见配置
 
 ## Apt-get源
 
@@ -19,7 +19,7 @@ ufw disable
 ## 交换空间
 
 ```shell
-swapoff a
+swapoff -a
 #永久关闭，注释掉第一行
 vim /et/fstab
 ```
@@ -37,10 +37,10 @@ netplan apply
 network:
   ethernets:
     ens33: #注意配置网卡
-      addresses: [192.168.11.138/24]
-      gateway4: 192.168.11.2
+      addresses: [192.168.242.110/24]
+      gateway4: 192.168.242.2
       nameservers:
-        addresses: [114.114.114.114, 192.168.11.2]
+        addresses: [114.114.114.114, 192.168.242.2]
       dhcp4: no
       optional: no
   version: 2
@@ -49,7 +49,7 @@ network:
 ## DNS
 
 ```shell
-vim /etc/systemd/resolve.conf
+vim /etc/systemd/resolved.conf
 [Resolve]
 DNS=114.114.114.144
 #FallbackDNS=
