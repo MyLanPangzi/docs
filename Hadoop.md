@@ -181,7 +181,40 @@
 
 ### Steps
 
-1. 准备分发脚本
+1. 格式化节点
+
+   ```shell
+   #删除logs，data目录
+   ssh hadoop100 rm -rf /opt/module/hadoop-2.10.0/data /opt/module/hadoop-2.10.0/logs
+   ssh hadoop102 rm -rf /opt/module/hadoop-2.10.0/data /opt/module/hadoop-2.10.0/logs
+   ssh hadoop101 rm -rf /opt/module/hadoop-2.10.0/data /opt/module/hadoop-2.10.0/logs && hdfs namenode -format
+   ```
+   
+2. 配置时间同步
+
+   ```shell
+   #选择一台节点作为主服务器，hadoop100
+   vim /etc/chrony.conf
+   #打开此行
+   #allow 192.168.0.0/16
+   systemctl restart chronyd
+   #测试
+   date -s "20:00:00"
+   #等一分钟后执行
+   chronyc makestep 1 -1
+   crontab -e 
+   */1 * * * * chronyc makestep 1 -1
+   
+   #修改其他节点配置
+   vim /etc/chrony.conf
+   #注释pool那行，增加
+   server hadoop100 iburst
+   
+   crontab -e 
+   */1 * * * * chronyc makestep 1 -1
+   ```
+
+3. 准备分发脚本
 
    ```shell
    #分发之前先ssh互通各台机器，注意用户
@@ -223,9 +256,10 @@
 
    
 
-2. 修改配置文件
+4. 修改配置文件
 
    ```shell
+   #DFS配置
    tee $HADOOP_HOME/etc/hadoop/core-site.xml <<-EOF
    <configuration>
    <!-- 指定HDFS中NameNode的地址 -->
@@ -242,6 +276,7 @@
    </configuration>
    EOF
    
+   #HDFS配置
    tee $HADOOP_HOME/etc/hadoop/hdfs-site.xml <<-EOF
    <configuration>
    	<!-- namenode 工作目录 -->
@@ -264,6 +299,7 @@
    </configuration>
    EOF
    
+   #YARN配置
    tee $HADOOP_HOME/etc/hadoop/yarn-site.xml <<-EOF
    <configuration>
        <property>
@@ -279,6 +315,7 @@
    </configuration>
    EOF
    
+   #mapreduce配置
    tee $HADOOP_HOME/etc/hadoop/mapred-site.xml <<-EOF
    <configuration>
            <!-- 历史服务器端地址 -->
@@ -298,22 +335,29 @@
    </configuration>
    EOF
    
+   #slaves配置
+   tee $HADOOP_HOME/etc/hadoop/slaves <<-EOF
+   hadoop100
+   hadoop101
+   hadoop102
+   EOF
+   
    #分发配置
    ~/bin/xsync.sh  $HADOOP_HOME/etc/hadoop/
    ```
 
-3. 准备启动脚本，检测脚本
+5. 准备启动脚本，检测脚本
 
    ```shell
    tee ~/bin/start.sh <<-EOF
    #!/bin/bash
    ssh hadoop100 /opt/module/hadoop-2.10.0/sbin/mr-jobhistory-daemon.sh start historyserver
-   ssh hadoop101 /opt/module/hadoop-2.10.0/sbin/start-dfs.sh
    ssh hadoop100 /opt/module/hadoop-2.10.0/sbin/start-yarn.sh
-   ./jps
+   ssh hadoop101 /opt/module/hadoop-2.10.0/sbin/start-dfs.sh
+   ./myjps
    EOF
    
-   tee ~/bin/jps.sh <<-EOF
+   tee ~/bin/myjps.sh <<-EOF
    #!/bin/bash
    for i in hadoop100 hadoop101 hadoop102
    do
@@ -330,13 +374,97 @@
 
    
 
-4. 测试
+6. 测试
 
    ```shell
    #http://hadoop101:50070/
-   #http://hadoop100:8088/
+   #http://hadoop100:8088/   
    #http://hadoop100:19888/
    #http://hadoop102:50090/
+   tee input <<-EOF
+   hello world
+   EOF
+   
+   hdfs dfs -mkdir -p /user/$(whoami)/
+   hdfs dfs -put input
+   hadoop jar /share/hadoop/mapreduce/hadoop-mapreduce-examples.jar wordcount input output 
+   hdfs dfs -cat output/*
+   ```
+
+## 新增数据节点
+
+### Steps
+
+1. 准备好服务器
+2. 搭建好hadoop单机环境
+3. 拷贝namenode下的hadoop/etc目录下的文件
+4. 删除data，logs目录
+5. 启动datanode
+
+## 退役数据节点
+
+### Steps
+
+1. 白名单退役（不推荐）
+
+   ```shell
+   #修改hdfs-site.xml，新增下面的配置
+   <property>
+   <name>dfs.hosts</name>
+   <value>/opt/module/hadoop-2.10.0/etc/hadoop/dfs.hosts</value>
+   </property>
+   
+   #新增etc/hadoop/dfs.hosts文件
+   tee etc/hadoop/dfs.hosts <<-EOF
+   hadoop100
+   hadoop101
+   hadoop102
+   EOF
+   
+   #分发
+   xsync etc/hadoop && hdfs dfsadmin -refreshNodes
    
    ```
+
+2. 黑名单退役
+
+   ```shell
+   #修改hdfs-site.xml
+   <property>
+   	<name>dfs.hosts.exclude</name>
+         <value>/opt/module/hadoop-2.10.0/etc/hadoop/dfs.hosts.exclude</value>
+   </property>
    
+   tee etc/hadoop/dfs.hosts.exclude <<-EOF
+   hadoop103
+   EOF
+   
+   xsync etc/hadoop 
+   hdfs dfsadmin -refreshNodes
+   
+   ```
+```
+   
+
+## DataNode多目录配置
+
+​```shell
+#hdfs-site.xml
+<property>
+        <name>dfs.datanode.data.dir</name>
+<value>file:///${hadoop.tmp.dir}/dfs/data1,file:///${hadoop.tmp.dir}/dfs/data2</value>
+</property>
+
+
+```
+
+| hadoop100 | hadoop101 | hadoop102 | hadoop103 | hadoop104 | hadoop105 | hadoop106 |
+| --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| RM        | RM        | NN        | NN        | ZK        | ZK        | ZK        |
+| History   |           | ZKFC      | ZKFC      | DN        | DN        | DN        |
+|           |           |           |           | NM        | NM        | NM        |
+|           |           |           |           | JN        | JN        | JN        |
+|           |           |           |           |           |           |           |
+|           |           |           |           |           |           |           |
+|           |           |           |           |           |           |           |
+

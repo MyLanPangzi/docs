@@ -24,3 +24,13 @@ ALTER USER 'root'@'localhost' IDENTIFIED BY 'Xiebo0409';
 
 ```
 
+## CentOS 8安装Docker
+
+```shell
+sudo yum  remove podman-manpages.noarch -y
+#https://download.docker.com/linux/centos/7/x86_64/stable/Packages/
+#下载最新的 containerd docker-ce-cli docker-ce 
+#下载libcgroup
+#rpm -ivh --nodeps --force
+```
+
