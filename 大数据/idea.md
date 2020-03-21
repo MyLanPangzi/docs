@@ -34,6 +34,14 @@
 
 9. 自动导入包![image-20200320215154815](image/auto-import.png)
 
+## Linux
+
+SSH连接服务器
+
+![image-20200321091424237](E:\github\docs\大数据\image\ssh-session.png)
+
+![image-20200321091542252](E:\github\docs\大数据\image\ssh.png)
+
 ## Database
 
 配置连接数据库
