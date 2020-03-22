@@ -1,6 +1,6 @@
 # Idea使用技巧
 
-用了idea，你可以丢掉Sqlyog，workbeanch，navicat，postman，xshell，securtCRT等工具。
+用了idea，你可以丢掉Sqlyog，workbeanch，navicat，postman，xshell，secureCRT等工具。
 
 ## Basic Settings
 

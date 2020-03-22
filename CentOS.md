@@ -1,6 +1,12 @@
 # CentOS
 
-## 修改yum源
+## 防火墙
+
+## 网卡
+
+## 内网穿透
+
+## Yum源
 
 1. 修改为163源
 
@@ -12,7 +18,7 @@
    yum makecache
    ```
 
-## 安装MySQL
+## MySQL
 
 1. https://dev.mysql.com/doc/refman/8.0/en/linux-installation-yum-repo.html
 
@@ -24,7 +30,7 @@ ALTER USER 'root'@'localhost' IDENTIFIED BY 'Xiebo0409';
 
 ```
 
-## CentOS 8安装Docker
+## Docker
 
 ```shell
 sudo yum  remove podman-manpages.noarch -y
