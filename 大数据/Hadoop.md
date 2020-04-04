@@ -448,7 +448,7 @@ Hadoop分布式文件系统，负责存储数据。
 | mapreduce.map.output.compress.codec<br />（在mapred-site.xml中配置） | false | mapper输出 | 企业多使用LZO或Snappy编解码器在此阶段压缩数据 |
 | mapreduce.output.fileoutputformat.compress<br />（在mapred-site.xml中配置） | org.apache.hadoop.io.compress.DefaultCodec | reducer输出 | 这个参数设为true启用压缩 |
 | mapreduce.output.fileoutputformat.compress.codec<br />（在mapred-site.xml中配置） | false | reducer输出 | 使用标准工具或者编解码器，如gzip和bzip2 |
-| mapreduce.output.fileoutputformat.compress.type<br />（在mapred-site.xml中配置） | org.apache.hadoop.io.compress. DefaultCodec | reducer输出 | SequenceFile输出使用的压缩类型：NONE和BLOCK |     
+| mapreduce.output.fileoutputformat.compress.type<br />（在mapred-site.xml中配置） | org.apache.hadoop.io.compress. DefaultCodec | reducer输出 | SequenceFile输出使用的压缩类型：NONE和BLOCK |
 
 ### 企业优化
 
@@ -484,11 +484,11 @@ HDFS上每个文件都要在NameNode上建立一个索引，这个索引的大�
 
 ## YARN
 
-###架构
+### 架构
 
 ![](image/YARN架构.png)
 
-###工作流
+### 工作流
 
 1. MR程序提交到客户端所在的节点。
 2. YarnRunner向ResourceManager申请一个Application。
@@ -508,8 +508,32 @@ HDFS上每个文件都要在NameNode上建立一个索引，这个索引的大�
 
 ![](image/YARN工作机制.png)
 
-###资源调度器
+### 资源调度器
 
-1. FIFO ![](image/FIFO.png)
-2. Capacity ![](image/Capacity.png)
-3. Fair ![](image/Fair.png)
+#### FIFO 
+
+ ![](image/FIFO.png)
+
+#### Capacity 
+
+特点：
+
+* 容量保证。管理员可为每个队列设置资源最低保证和资源使用上限，而所有提交到该队列的应用程序共享这些资源。
+* 灵活性，如果一个队列中的资源有剩余，可以暂时共享给那些需要资源的队列，而一旦该队列有新的应用程序提交，则其他队列释放的资源会归还给该队列。这种资源灵活分配的方式可明显提高资源利用率。
+* 多重租赁。支持多用户共享集群和多应用程序同时运行。为防止单个应用程序、用户或者队列独占集群中的资源，管理员可为之增加多重约束（比如单个应用程序同时运行的任务数等）。
+* 安全保证。每个队列有严格的ACL列表规定它的访问用户，每个用户可指定哪些用户允许查看自己应用程序的运行状态或者控制应用程序（比如杀死应用程序）。此外，管理员可指定队列管理员和集群系统管理员。
+* 动态更新配置文件。管理员可根据需要动态修改各种配置参数，以实现在线集群管理。
+
+![](image/Capacity.png)
+
+#### Fair 
+
+特点：
+* 资源公平共享。在每个队列中，Fair Scheduler 可选择按照FIFO、Fair或DRF策略为应用程序分配资源。其中，Fair 策略(默认)是一种基于最大最小公平算法实现的资源多路复用方式，默认情况下，每个队列内部采用该方式分配资源。这意味着，如果一个队列中有两个应用程序同时运行，则每个应用程序可得到1/2的资源；如果三个应用程序同时运行，则每个应用程序可得到1/3的资源。
+* 支持资源抢占。当某个队列中有剩余资源时，调度器会将这些资源共享给其他队列，而当该队列中有新的应用程序提交时，调度器要为它回收资源。为了尽可能降低不必要的计算浪费，调度器采用了先等待再强制回收的策略，即如果等待一段时间后尚有未归还的资源，则会进行资源抢占：从那些超额使用资源的队列中杀死一部分任务，进而释放资源。
+* 负载均衡。Fair Scheduler提供了一个基于任务数目的负载均衡机制，该机制尽可能将系统中的任务均匀分配到各个节点上。此外，用户也可以根据自己的需要设计负载均衡机制。
+* 调度策略配置灵活。Fair Scheduler允许管理员为每个队列单独设置调度策略（当前支持FIFO、Fair或DRF三种）。
+* 提高小应用程序响应时间。由于采用了最大最小公平算法，小作业可以快速获取资源并运行完成
+
+![](image/Fair.png) 
+

@@ -26,7 +26,7 @@
 yum install mysql-server.x86_64 -y
 systemctl start mysqld
 mysql
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'Xiebo0409';
+ALTER USER 'root'@'localhost' IDENTIFIED BY '密码';
 
 ```
 

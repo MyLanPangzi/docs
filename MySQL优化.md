@@ -765,14 +765,14 @@ binlog-ignore-db=mysql,test  # 设置不要复制的数据库 \n
 #binlog-do-db=xxx  # 设置需要复制的主数据库名字\n'  >> /etc/my.cnf.d/mysql-server.cnf
 
 systemctl restart mysqld && sleep 20
-mysql -uroot -pXiebo0409
-CREATE USER 'slave4'@'%' IDENTIFIED BY 'Xiebo0409';
+mysql -uroot -p密码
+CREATE USER 'slave4'@'%' IDENTIFIED BY '密码';
 GRANT REPLICATION SLAVE ON *.* TO 'slave4'@'%';
 FLUSH TABLES WITH READ LOCK;
 SHOW MASTER STATUS;#记录position
 exit
 
-mysqldump -uroot -pXiebo0409 --all-databases --master-data > dbdump.db
+mysqldump -uroot -p密码 --all-databases --master-data > dbdump.db
 scp -P 2222 ./dbdump.db root@192.168.2.137:/root/
 
 ```
@@ -788,9 +788,9 @@ relay-log=mysql-relay   #中继日志 \n
 '  >> /etc/my.cnf.d/mysql-server.cnf
 
 systemctl restart mysqld && sleep 20
-mysql -uroot -pXiebo0409 < fulldb.dump
-mysql -uroot -pXiebo0409
-CHANGE MASTER TO MASTER_HOST='192.168.2.139',MASTER_USER='slave4',MASTER_PASSWORD='Xiebo0409',MASTER_LOG_FILE='mysql-bin.000002',MASTER_LOG_POS=599;#修改MASTER_LOG_POS为Master的Position
+mysql -uroot -p密码 < fulldb.dump
+mysql -uroot -p密码
+CHANGE MASTER TO MASTER_HOST='192.168.2.139',MASTER_USER='slave4',MASTER_PASSWORD='密码',MASTER_LOG_FILE='mysql-bin.000002',MASTER_LOG_POS=599;#修改MASTER_LOG_POS为Master的Position
 
 START SLAVE;
 SHOW SLAVE STATUS\G
@@ -861,7 +861,7 @@ systemctl stop keepalived ' >> /var/lib/mysql/killkeepalived.sh
 chmod 777 /var/lib/mysql/killkeepalived.sh
 systemctl start keepalived 
 systemctl status keepalived
-mysql -h192.168.2.163 -uroot -pXiebo0409
+mysql -h192.168.2.163 -uroot -p密码
 
 ```
 
