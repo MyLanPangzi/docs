@@ -374,7 +374,7 @@ Hadoop分布式文件系统，负责存储数据。
 
 ![](image/MapReduce工作流程.png)
 
-![](image/#### MapReduce工作流程2.png)
+![](image/MapReduce工作流程2.png)
 
 #### Shuffle
 

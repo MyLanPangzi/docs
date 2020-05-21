@@ -11,7 +11,7 @@ HBase是一种分布式、可扩展、支持海量数据存储的NoSQL数据库�
 逻辑上，HBase的数据模型同关系型数据库很类似，数据存储在一张表中，有行有列。<br/>
 但从HBase的底层物理存储结构（K-V. 来看，HBase更像是一个multi-dimensional map。
 
-1. Name Space
+1. NameSpace
     1. 命名空间，类似于关系型数据库的DataBase概念，每个命名空间下有多个表。HBase有两个自带的命名空间，分别是“hbase”和“default”，“hbase”中存放的是HBase内置的表，“default”表是用户默认使用的命名空间。
 2. Region
     1. 类似于关系型数据库的表概念。不同的是，HBase定义表时只需要声明列族即可，不需要声明具体的列。这意味着，往HBase写入数据时，字段可以动态、按需指定。因此，和关系型数据库相比，HBase能够轻松应对字段变更的场景。

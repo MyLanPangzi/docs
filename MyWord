@@ -1,0 +1,54 @@
+## MyWord架构
+
+K8S+SpringCloud
+
+## 前端
+
+1. Vue3
+2. VueRouter
+3. ElementUI
+4. Element-admin UI
+
+## 数据存储
+
+1. MySql
+2. Mongo
+
+## 缓存
+
+1. Redis
+
+## 负载均衡
+
+
+
+## 模块划分
+
+### 注册中心
+
+1. Nacos
+
+### 网关
+
+1. Spring Cloud Gateway
+
+### 配置中心
+
+1. Nacos
+
+### 权限认证
+
+1. SpringSecuriry
+2. OAuth2.0
+
+### 服务调用
+
+1. Dubbo
+
+### 我的单词
+
+1. 新增单词
+2. 按天查询单词/按字母顺序查询单词
+3. 翻译单词
+4. 新增句子
+

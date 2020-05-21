@@ -1,0 +1,220 @@
+﻿https://github.com/apache/flink.git
+SparkSubmit
+    doSubmit
+    submit
+    runMain
+    prepareSubmitEnvironment --> YarnClusterApplication
+
+YarnClusterApplication
+    start
+    org.apache.spark.deploy.yarn.Client   
+        run
+        submitApplication
+        yarnClient.createApplication()
+        createContainerLaunchContext
+                val amContainer = Records.newRecord(classOf[ContainerLaunchContext])
+                val amClass =
+                if (isClusterMode) {
+                    Utils.classForName("org.apache.spark.deploy.yarn.ApplicationMaster").getName
+                } else {
+                    Utils.classForName("org.apache.spark.deploy.yarn.ExecutorLauncher").getName
+                }
+                 val commands = prefixEnv ++
+                Seq(Environment.JAVA_HOME.$$() + "/bin/java", "-server") ++
+                javaOpts ++ amArgs ++
+                Seq(
+                    "1>", ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stdout",
+                    "2>", ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/stderr")
+                amContainer.setCommands(printableCommands.asJava)
+        yarnClient.submitApplication(appContext)
+            rmClient.submitApplication(request);
+
+ApplicationMaster
+    run
+    runImpl
+    runDriver()
+    userClassThread = startUserApplication()
+    val mainMethod = userClassLoader.loadClass(args.userClass)
+    .getMethod("main", classOf[Array[String]])
+    val userThread = new Thread {
+    override def run() {
+        mainMethod.invoke(null, userArgs.toArray)
+    userThread.setName("Driver")
+
+    registerAM(host, port, userConf, sc.ui.map(_.webUrl))
+        org.apache.spark.deploy.yarn.YarnRMClient client.register(host, port, yarnConf, _sparkConf, uiAddress, historyAddress)
+        amClient = AMRMClient.createAMRMClient()
+        amClient.registerApplicationMaster(driverHost, driverPort, trackingUrl)
+        RegisterApplicationMasterResponse response =
+            rmClient.registerApplicationMaster(request);
+
+    val driverRef = rpcEnv.setupEndpointRef(
+        RpcAddress(host, port),
+        YarnSchedulerBackend.ENDPOINT_NAME)
+    createAllocator(driverRef, userConf)
+        allocator = client.createAllocator(  YarnRMClient
+            yarnConf,
+            _sparkConf,
+            driverUrl,
+            driverRef,
+            securityMgr,
+            localResources)
+        allocator.allocateResources()
+        val allocateResponse = amClient.allocate(progressIndicator)
+            allocateResponse = rmClient.allocate(allocateRequest);
+        val allocatedContainers = allocateResponse.getAllocatedContainers()
+        handleAllocatedContainers(allocatedContainers.asScala)
+        runAllocatedContainers(containersToUse)
+          if (runningExecutors.size() < targetNumExecutors) {
+        numExecutorsStarting.incrementAndGet()
+        if (launchContainers) {
+          launcherPool.execute(new Runnable {
+            override def run(): Unit = {
+              try {
+                new ExecutorRunnable(
+                  Some(container),
+                  conf,
+                  sparkConf,
+                  driverUrl,
+                  executorId,
+                  executorHostname,
+                  executorMemory,
+                  executorCores,
+                  appAttemptId.getApplicationId.toString,
+                  securityMgr,
+                  localResources
+                ).run()
+                    nmClient = NMClient.createNMClient()
+                    nmClient.init(conf)
+                    nmClient.start()
+                    startContainer()
+                    val commands = prepareCommand()
+                    YarnSparkHadoopUtil.addOutOfMemoryErrorArgument(javaOpts)
+                    val commands = prefixEnv ++
+                        Seq(Environment.JAVA_HOME.$$() + "/bin/java", "-server") ++
+                        javaOpts ++
+                        Seq("org.apache.spark.executor.CoarseGrainedExecutorBackend",
+                        "--driver-url", masterAddress,
+                        "--executor-id", executorId,
+                        "--hostname", hostname,
+                        "--cores", executorCores.toString,
+                        "--app-id", appId) ++
+                        userClassPath ++
+                        Seq(
+                        s"1>${ApplicationConstants.LOG_DIR_EXPANSION_VAR}/stdout",
+                        s"2>${ApplicationConstants.LOG_DIR_EXPANSION_VAR}/stderr")
+
+                    nmClient.startContainer(container.get, ctx)
+
+    resumeDriver()
+    userClassThread.join()
+
+
+行动算子
+SparkContext
+    collect
+    val results = sc.runJob(this, (iter: Iterator[T]) => iter.toArray)
+    runJob(rdd, func, 0 until rdd.partitions.length)
+    runJob(rdd, (ctx: TaskContext, it: Iterator[T]) => cleanedFunc(it), partitions)
+    runJob[T, U](rdd, func, partitions, (index, res) => results(index) = res)
+
+DAGScheduler
+    dagScheduler.runJob(rdd, cleanedFunc, partitions, callSite, resultHandler, localProperties.get)
+        val waiter = submitJob(rdd, func, partitions, callSite, resultHandler, properties)
+            val waiter = new JobWaiter(this, jobId, partitions.size, resultHandler)
+            DAGSchedulerEventProcessLoop  eventProcessLoop.post(JobSubmitted(    
+                jobId, rdd, func2, partitions.toArray, callSite, waiter,
+                SerializationUtils.clone(properties)))
+                
+                def post(event: E): Unit = {
+                    eventQueue.put(event)
+                }
+
+EventLoop
+      // Exposed for testing.
+    private[spark] val eventThread = new Thread(name) {
+        override def run(): Unit = {
+            while (!stopped.get) {
+                val event = eventQueue.take()
+                onReceive(event)
+            }
+    }
+DAGSchedulerEventProcessLoop
+    override def onReceive(event: DAGSchedulerEvent): Unit = {
+        val timerContext = timer.time()
+        try {
+            doOnReceive(event)
+        } finally {
+        timerContext.stop()
+        }
+    }
+dagScheduler.handleJobSubmitted(jobId, rdd, func, partitions, callSite, listener, properties)
+
+finalStage = createResultStage(finalRDD, func, partitions, jobId, callSite)
+val job = new ActiveJob(jobId, finalStage, callSite, listener, properties)
+finalStage.setActiveJob(job)
+submitStage(finalStage)
+    submitMissingTasks(stage, jobId.get)
+    submitStage(parent)
+
+submitMissingTasks(stage, jobId.get)
+    val tasks: Seq[Task[_]] = try {
+      stage match {
+        case stage: ShuffleMapStage =>
+          partitionsToCompute.map { id =>
+            new ShuffleMapTask(stage.id, stage.latestInfo.attemptNumber,
+              taskBinary, part, locs, properties, serializedTaskMetrics, Option(jobId),
+              Option(sc.applicationId), sc.applicationAttemptId, stage.rdd.isBarrier())
+          }
+
+        case stage: ResultStage =>
+          partitionsToCompute.map { id =>
+            new ResultTask(stage.id, stage.latestInfo.attemptNumber,
+              taskBinary, part, locs, id, properties, serializedTaskMetrics,
+              Option(jobId), Option(sc.applicationId), sc.applicationAttemptId,
+              stage.rdd.isBarrier())
+          }
+      }
+
+taskScheduler.submitTasks(new TaskSet(tasks.toArray, stage.id, stage.latestInfo.attemptNumber, jobId, properties))
+
+val manager = createTaskSetManager(taskSet, maxTaskFailures)
+schedulableBuilder.addTaskSetManager(manager, manager.taskSet.properties)
+backend.reviveOffers()
+
+CoarseGrainedSchedulerBackend
+    override def reviveOffers() {
+        driverEndpoint.send(ReviveOffers)
+    }
+
+DriverEndpoint
+     case ReviveOffers => makeOffers()
+    launchTasks(taskDescs)
+    executorData.executorEndpoint.send(LaunchTask(new SerializableBuffer(serializedTask)))
+
+CoarseGrainedExecutorBackend
+    case LaunchTask(data) =>
+        val taskDesc = TaskDescription.decode(data.value)
+        executor.launchTask(this, taskDesc)
+        val tr = new TaskRunner(context, taskDescription)
+        runningTasks.put(taskDescription.taskId, tr)
+        threadPool.execute(tr)
+
+TaskRunner
+    run
+    task = ser.deserialize[Task[Any]](
+        taskDescription.serializedTask, Thread.currentThread.getContextClassLoader)
+    task.localProperties = taskDescription.properties
+    task.setTaskMemoryManager(taskMemoryManager)
+    val res = task.run(
+    taskAttemptId = taskId,
+    attemptNumber = taskDescription.attemptNumber,
+    metricsSystem = env.metricsSystem)
+    
+    runTask(context)
+
+ResultTask
+    func(context, rdd.iterator(partition, context))
+
+ShuffleMapTask
+    writer.write(rdd.iterator(partition, context).asInstanceOf[Iterator[_ <: Product2[Any, Any]]])
