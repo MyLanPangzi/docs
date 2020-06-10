@@ -518,7 +518,7 @@ Flink使用异步异步状态快照，使用copy-on-write的数据结构，例�
 
 这些任务包含状态同步完成的部分以及异步挂起的部分。然后异步的部分通过一个检查点后台线程执行。
 
-检查点纯同步的算子然后一个已完成的FutureTask。如果异步操作需要完成，则执行run方法。
+检查点纯同步的算子作为一个已完成的FutureTask。如果异步操作需要完成，则执行run方法。
 
 这些任务可以被取消，所以流以及其他资源可以被释放。
 
@@ -580,3 +580,47 @@ FSDataOutputStream在调用close方法后，必须保证数据持久化。
 
 FSDataOutputStream以及实现严格的非线程安全：流实例不应该在读或写操作的线程间传递，因为没有跨线程操作可见性的保证。（许多操作不能创建内存屏蔽）
 
+## 基础API概念
+
+### 数据集与数据流
+
+Flink使用DataSet以及DataStream描述数据。
+
+可以认为这些API是不可变的数据集合。
+
+DataSet对应有限数据集。DataStream对应无限数据集。
+
+集合一旦创建不可被修改。可以通过Source创建集合，新集合可以使用转换在旧集合上衍生。
+
+### Flink程序剖析
+
+程序组成:
+
+1. 获取执行环境
+2. 加载数据集
+3. 使用转换函数
+4. 输出结果
+5. 触发执行
+
+- DataSet API：org.apache.flink.api.scala
+- DataStream API：org.apache.flink.streaming.api.scala
+
+```scala
+getExecutionEnvironment()
+
+createLocalEnvironment()
+
+createRemoteEnvironment(host: String, port: Int, jarFiles: String*)
+```
+
+
+
+### 惰性求值
+
+### 指定Key
+
+### 指定转换函数
+
+### 数据类型
+
+### 累加器与计数器
