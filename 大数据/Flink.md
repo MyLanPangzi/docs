@@ -2,6 +2,32 @@
 
 官网翻译，版本:1.10
 
+## 项目设置
+
+```shell
+mvn archetype:generate                               \
+      -DarchetypeGroupId=org.apache.flink              \
+      -DarchetypeArtifactId=flink-quickstart-scala     \
+      -DarchetypeVersion=1.10.0							\
+      -DgroupId=com.hiscat \
+   	-DartifactId=flink-base \
+    -Dversion=1.0 \
+    -Dpackage=com.hiscat.flink
+    -DinteractiveMode=false
+      
+ mvn archetype:generate \
+    -DarchetypeGroupId=org.apache.flink \
+    -DarchetypeArtifactId=flink-walkthrough-datastream-java \
+    -DarchetypeVersion=1.10.0 \
+    -DgroupId=frauddetection \
+    -DartifactId=frauddetection \
+    -Dversion=0.1 \
+    -Dpackage=spendreport \
+    -DinteractiveMode=false
+```
+
+
+
 ## 编程模型
 
 ### 抽象级别
