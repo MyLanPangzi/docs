@@ -2,7 +2,7 @@
 
 ## Linux
 
-- [ CentOS ](docs/CentOS.md)
+- [ CentOS开发常用配置 ](docs/CentOS.md)
 
 ## JAVA
 
