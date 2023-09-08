@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-09-08T09:04:01.349Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36" etag="_GIgH7ZN0g0BLZB3dW7S" version="21.6.5" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2023-09-08T09:04:13.911Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36" etag="EfFPkrpIb0guUBYZPKjW" version="21.6.5" type="github" pages="2">
   <diagram name="第 1 页" id="vnGX1i6LaIlqRCUc3wac">
     <mxGraphModel dx="1242" dy="706" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -106,7 +106,7 @@
         <mxCell id="ci8X_iL2yYVeFsMhtKuu-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ci8X_iL2yYVeFsMhtKuu-10" target="ci8X_iL2yYVeFsMhtKuu-11">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="ci8X_iL2yYVeFsMhtKuu-10" value="StarRocks" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.database;whiteSpace=wrap;" vertex="1" parent="1">
+        <mxCell id="ci8X_iL2yYVeFsMhtKuu-10" value="MySQL" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.database;whiteSpace=wrap;" vertex="1" parent="1">
           <mxGeometry x="240" y="580" width="60" height="60" as="geometry" />
         </mxCell>
         <mxCell id="ci8X_iL2yYVeFsMhtKuu-11" value="Galaxy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
