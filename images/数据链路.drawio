@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-09-08T09:04:13.911Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36" etag="EfFPkrpIb0guUBYZPKjW" version="21.6.5" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2023-09-08T09:05:05.759Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36" etag="0LCDydvVQOuxcTE2qxws" version="21.6.5" type="github" pages="2">
   <diagram name="第 1 页" id="vnGX1i6LaIlqRCUc3wac">
     <mxGraphModel dx="1242" dy="706" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -94,23 +94,37 @@
         <mxCell id="ci8X_iL2yYVeFsMhtKuu-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ci8X_iL2yYVeFsMhtKuu-6" target="ci8X_iL2yYVeFsMhtKuu-8">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="ci8X_iL2yYVeFsMhtKuu-6" value="kafka" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.direct_data;whiteSpace=wrap;" vertex="1" parent="1">
+        <mxCell id="ci8X_iL2yYVeFsMhtKuu-6" value="kafka stg" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.direct_data;whiteSpace=wrap;" vertex="1" parent="1">
           <mxGeometry x="220" y="410" width="100" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="ci8X_iL2yYVeFsMhtKuu-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="ci8X_iL2yYVeFsMhtKuu-8" target="ci8X_iL2yYVeFsMhtKuu-10">
+        <mxCell id="ci8X_iL2yYVeFsMhtKuu-22" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ci8X_iL2yYVeFsMhtKuu-8" target="ci8X_iL2yYVeFsMhtKuu-20">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
+        <mxCell id="ci8X_iL2yYVeFsMhtKuu-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="ci8X_iL2yYVeFsMhtKuu-8" target="ci8X_iL2yYVeFsMhtKuu-23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ci8X_iL2yYVeFsMhtKuu-25" value="join" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="ci8X_iL2yYVeFsMhtKuu-24">
+          <mxGeometry x="0.0333" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="ci8X_iL2yYVeFsMhtKuu-8" value="flink" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="210" y="490" width="120" height="60" as="geometry" />
+          <mxGeometry x="210" y="490" width="120" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ci8X_iL2yYVeFsMhtKuu-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ci8X_iL2yYVeFsMhtKuu-10" target="ci8X_iL2yYVeFsMhtKuu-11">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="ci8X_iL2yYVeFsMhtKuu-10" value="MySQL" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.database;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="240" y="580" width="60" height="60" as="geometry" />
+          <mxGeometry x="240" y="650" width="60" height="60" as="geometry" />
         </mxCell>
         <mxCell id="ci8X_iL2yYVeFsMhtKuu-11" value="Galaxy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="210" y="680" width="120" height="60" as="geometry" />
+          <mxGeometry x="210" y="750" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ci8X_iL2yYVeFsMhtKuu-20" value="kafka" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.direct_data;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="220" y="580" width="100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ci8X_iL2yYVeFsMhtKuu-23" value="MySQL" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.database;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="450" y="480" width="60" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
